@@ -383,6 +383,7 @@ class MainWindow(QMainWindow):
         container = QWidget()
         hlay = QHBoxLayout(container)
         hlay.addWidget(self.var_resuelvo, 1)
+        self.var_resuelvo.hide()
         hlay.addWidget(btn_edit_res)
         self.form.addWidget(container, row, 1)
         self._row += 1
