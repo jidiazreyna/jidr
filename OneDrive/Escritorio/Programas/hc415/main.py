@@ -367,6 +367,9 @@ class MainWindow(QMainWindow):
         self.var_resuelvo    = QTextEdit()
         self.var_resuelvo.setReadOnly(True)
         self.var_resuelvo.setFixedHeight(80)
+        base_font = QFont("Times New Roman", 12)
+        self.var_resuelvo.setFont(base_font)
+        self.var_resuelvo.document().setDefaultFont(base_font)
         # alias para compatibilidad con el resto
         self.entry_resuelvo  = self.var_resuelvo
 
@@ -668,18 +671,27 @@ class MainWindow(QMainWindow):
 
     def _guardar_resuelvo_html(self, html_limpio: str) -> None:
         clean = html_limpio.strip()
-        # 1) guardo el HTML
+        # 1) guardo el HTML completo
         self.entry_resuelvo.setProperty("html", clean)
-        # 2) genero el preview plano
+        self.entry_resuelvo.setHtml(clean)
+        # 2) texto plano sin límite
         doc = QTextDocument()
         doc.setHtml(clean)
-        preview = doc.toPlainText().replace("\n", " ")[:200]
-        self.entry_resuelvo.setPlainText(preview)
-        # 3) actualizo tu modelo
+        preview = doc.toPlainText().replace("\n", " ")
+        # 3) actualizo tu modelo con HTML y texto completo
         self.data.resuelvo_html = clean
         self.data.resuelvo      = preview
-        # 4) refresco la plantilla ¡usando el método correcto!
+        # 4) refresco la plantilla
         self.update_template()
+
+    def _toggle_bold(self, editor: QTextEdit):
+        cursor = editor.textCursor()
+        if not cursor.hasSelection():
+            return
+        fmt = QTextCharFormat()
+        bold_now = cursor.charFormat().fontWeight() > QFont.Normal
+        fmt.setFontWeight(QFont.Normal if bold_now else QFont.Bold)
+        cursor.mergeCharFormat(fmt)
 
 
     def _rich_text_dialog(self, title: str, initial_html: str, on_accept):
@@ -710,21 +722,12 @@ class MainWindow(QMainWindow):
         lay_top.addWidget(editor)
 
         # negrita con botón
-        def toggle_bold():
-            cur = editor.textCursor()
-            if not cur.hasSelection():
-                return
-            fmt = cur.charFormat()
-            fmt.setFontWeight(
-                QFont.Normal
-                if fmt.fontWeight() > QFont.Normal
-                else QFont.Bold
-            )
-            cur.mergeCharFormat(fmt)
-        btn_bold.clicked.connect(toggle_bold)
+        btn_bold.clicked.connect(lambda: self._toggle_bold(editor))
 
         # negrita con Ctrl+B
-        editor.addAction(QAction(self, shortcut="Ctrl+B", triggered=toggle_bold))
+        editor.addAction(
+            QAction(self, shortcut="Ctrl+B", triggered=lambda: self._toggle_bold(editor))
+        )
 
         # — OK / Cancel —
         btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -1443,7 +1446,10 @@ class MainWindow(QMainWindow):
             if isinstance(w, QLineEdit):  return w.text()
             if isinstance(w, QComboBox):  return w.currentText()
             return ""
-        raw_html = self.entry_resuelvo.property("html") or self.entry_resuelvo.text()
+        raw_html = (
+            self.entry_resuelvo.property("html")
+            or self.entry_resuelvo.toHtml()
+        )
 
         # ① texto plano SIN saltos (\n → espacio)
         resuelvo_plano = self.html_a_plano(raw_html, mantener_saltos=False)
@@ -1694,7 +1700,10 @@ class MainWindow(QMainWindow):
 
         # — extraer sólo el punto con 'Declarar' —
         # 1) obtener el HTML original y aplanarlo sin saltos
-        raw = self.entry_resuelvo.property("html") or self.entry_resuelvo.text()
+        raw = (
+            self.entry_resuelvo.property("html")
+            or self.entry_resuelvo.toHtml()
+        )
         full = self.html_a_plano(raw, mantener_saltos=False)
         pattern = r'\b([IVX]+|\d+)\.\s+([\s\S]*?)(?=(?:[IVX]+|\d+)\.\s+|$)'
 
@@ -2230,7 +2239,10 @@ class MainWindow(QMainWindow):
             'funcionario': self.entry_funcionario.text(),
             'fiscal': self.entry_fiscal.text(),
             'sentencia': self.entry_sentencia.text(),
-            'resuelvo': self.entry_resuelvo.text(),
+            'resuelvo': (
+                self.entry_resuelvo.property("html")
+                or self.entry_resuelvo.toHtml()
+            ),
             'firmantes': self.entry_firmantes.text(),
             'renuncia': self.combo_renuncia.currentText()
         }
@@ -2266,9 +2278,11 @@ class MainWindow(QMainWindow):
             self.entry_fiscal.setText(g.get("fiscal", ""))
             self.entry_sentencia.setText(g.get("sentencia", ""))
             txt = g.get("resuelvo", "")
-            self.entry_resuelvo.setText(
-                self.html_a_plano(txt, mantener_saltos=True) if "<" in txt else txt
-            )
+            if "<" in txt:
+                self.entry_resuelvo.setHtml(txt)
+            else:
+                self.entry_resuelvo.setPlainText(txt)
+            self.entry_resuelvo.setProperty("html", txt)
             self.entry_firmantes.setText(g.get("firmantes", ""))
             self.combo_renuncia.setCurrentText(g.get("renuncia", ""))
 
