@@ -334,6 +334,9 @@ class SentenciaWidget(QWidget):
         self.imputados: list = []
         self.hechos: list = []
 
+        # para resaltar cambios en la plantilla
+        self._prev_plain = ""
+
         self.data = data
         # ───────────────────────────────────────────────
         # Localidad
@@ -598,6 +601,29 @@ class SentenciaWidget(QWidget):
         self.lbl_zoom.setVisible(True)           # ¡mostrar!
         self._hide_zoom_timer.start(1000)        # se ocultará en 1 s
 
+    def _highlight_diff(self, old_text: str, new_text: str) -> None:
+        """Resalta en amarillo los fragmentos modificados."""
+        from difflib import SequenceMatcher
+        from PySide6.QtGui import QTextCursor, QTextCharFormat, QBrush
+
+        cursor = self.texto_plantilla.textCursor()
+
+        # Limpia resaltados previos
+        fmt_clear = QTextCharFormat()
+        fmt_clear.setBackground(QBrush(Qt.transparent))
+        cursor.select(QTextCursor.Document)
+        cursor.mergeCharFormat(fmt_clear)
+
+        matcher = SequenceMatcher(None, old_text, new_text)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'equal' or j1 == j2:
+                continue
+            cursor.setPosition(j1)
+            cursor.setPosition(j2, QTextCursor.KeepAnchor)
+            fmt = QTextCharFormat()
+            fmt.setBackground(QBrush(Qt.yellow))
+            cursor.mergeCharFormat(fmt)
+
     def toggle_cargo_juez(self):
         if self.cargo_juez == "juez":
             self.cargo_juez = "vocal"
@@ -605,11 +631,6 @@ class SentenciaWidget(QWidget):
             self.cargo_juez = "juez"
         self.boton_cargo_juez.setText(self.cargo_juez)
         self.actualizar_plantilla()
-
-    def _update_zoom_label(self, percent: int):
-        self.lbl_zoom.setText(f"ZOOM {percent}%")
-        self.lbl_zoom.setVisible(True)           # ¡mostrar!
-        self._hide_zoom_timer.start(1000)        # se ocultará en 1 s
 
     def _toggle_bold(self, editor: QTextEdit):
         cursor = editor.textCursor()
@@ -2898,9 +2919,16 @@ class SentenciaWidget(QWidget):
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
+        old_plain = self._prev_plain
         self.texto_plantilla.setHtml(plantilla)
         self.texto_plantilla.setAlignment(Qt.AlignJustify)
-        QTimer.singleShot(0, lambda: sb.setValue(pos))
+
+        new_plain = self.texto_plantilla.toPlainText()
+        if old_plain:
+            self._highlight_diff(old_plain, new_plain)
+        self._prev_plain = new_plain
+
+        QTimer.singleShot(0, lambda: self.texto_plantilla.verticalScrollBar().setValue(pos))
     
     def _sync_imp(self, idx: int, key: str, value: str):
         while len(self.data.imputados) <= idx:
