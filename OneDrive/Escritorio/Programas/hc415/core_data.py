@@ -134,7 +134,12 @@ class CausaData:
         _set(win.entry_sentencia, self.sentencia_num)
         if hasattr(win, "entry_resuelvo"):
             blocker = QSignalBlocker(win.entry_resuelvo)
-            win.entry_resuelvo.setHtml(self.resuelvo)
+            html_full = (self.resuelvo or getattr(self, "resuelvo_html", ""))
+            win.entry_resuelvo.setProperty("html", html_full)
+            from PySide6.QtGui import QTextDocument
+            doc = QTextDocument(); doc.setHtml(html_full)
+            preview = doc.toPlainText().replace("\n", " ")[:200]
+            win.entry_resuelvo.setPlainText(preview)
         _set(win.entry_firmantes, self.firmantes)
         _setc(win.combo_renuncia, "Sí" if self.renuncia else "No")
         # Evito que al cambiar combo_n se dispare update_template() → data.from_main()
