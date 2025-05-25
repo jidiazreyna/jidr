@@ -606,13 +606,15 @@ class SentenciaWidget(QWidget):
         from difflib import SequenceMatcher
         from PySide6.QtGui import QTextCursor, QTextCharFormat, QBrush
 
-        cursor = self.texto_plantilla.textCursor()
+        # Cursor independiente para no mover la posición del usuario
+        cursor = QTextCursor(self.texto_plantilla.document())
 
         # Limpia resaltados previos
         fmt_clear = QTextCharFormat()
         fmt_clear.setBackground(QBrush(Qt.transparent))
         cursor.select(QTextCursor.Document)
         cursor.mergeCharFormat(fmt_clear)
+        self._clear_highlight_timer.stop()
 
         matcher = SequenceMatcher(None, old_text, new_text)
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -623,6 +625,24 @@ class SentenciaWidget(QWidget):
             fmt = QTextCharFormat()
             fmt.setBackground(QBrush(Qt.yellow))
             cursor.mergeCharFormat(fmt)
+
+        # El resaltado se limpiará automáticamente tras 3 segundos
+        self._clear_highlight_timer.start(3000)
+
+    def _clear_highlight(self) -> None:
+        """Quita el resaltado preservando la posición de scroll."""
+        from PySide6.QtGui import QTextCursor, QTextCharFormat, QBrush
+
+        sb = self.texto_plantilla.verticalScrollBar()
+        pos = sb.value()
+
+        cursor = QTextCursor(self.texto_plantilla.document())
+        fmt_clear = QTextCharFormat()
+        fmt_clear.setBackground(QBrush(Qt.transparent))
+        cursor.select(QTextCursor.Document)
+        cursor.mergeCharFormat(fmt_clear)
+
+        sb.setValue(pos)
 
     def toggle_cargo_juez(self):
         if self.cargo_juez == "juez":
@@ -1171,6 +1191,11 @@ class SentenciaWidget(QWidget):
         self._hide_zoom_timer = QTimer(self)
         self._hide_zoom_timer.setSingleShot(True)
         self._hide_zoom_timer.timeout.connect(lambda: self.lbl_zoom.setVisible(False))
+
+        # Temporizador para eliminar el resaltado después de unos segundos
+        self._clear_highlight_timer = QTimer(self)
+        self._clear_highlight_timer.setSingleShot(True)
+        self._clear_highlight_timer.timeout.connect(self._clear_highlight)
 
         # 3) El editor
         right_layout.addWidget(self.texto_plantilla)
