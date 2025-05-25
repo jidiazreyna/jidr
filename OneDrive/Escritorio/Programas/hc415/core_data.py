@@ -84,10 +84,14 @@ class CausaData:
         self.fiscal_nombre   = getattr(win, "entry_fiscal",       None).text() if hasattr(win, "entry_fiscal") else self.fiscal_nombre
         self.sentencia_num   = getattr(win, "entry_sentencia",    None).text() if hasattr(win, "entry_sentencia") else self.sentencia_num
         if hasattr(win, "entry_resuelvo"):
-            self.resuelvo = (
+            html_full = (
                 win.entry_resuelvo.property("html")
                 or win.entry_resuelvo.toHtml()
             )
+            self.resuelvo_html = html_full
+            from PySide6.QtGui import QTextDocument
+            doc = QTextDocument(); doc.setHtml(html_full)
+            self.resuelvo = doc.toPlainText().replace("\n", " ")
         self.firmantes       = getattr(win, "entry_firmantes",    None).text() if hasattr(win, "entry_firmantes") else self.firmantes
         self.renuncia        = getattr(win, "combo_renuncia",     None).currentText() == "Sí" if hasattr(win, "combo_renuncia") else self.renuncia
         self.n_imputados     = int(getattr(win, "combo_n",        None).currentText()) if hasattr(win, "combo_n") else self.n_imputados
@@ -134,7 +138,7 @@ class CausaData:
         _set(win.entry_sentencia, self.sentencia_num)
         if hasattr(win, "entry_resuelvo"):
             blocker = QSignalBlocker(win.entry_resuelvo)
-            html_full = (self.resuelvo or getattr(self, "resuelvo_html", ""))
+            html_full = getattr(self, "resuelvo_html", self.resuelvo)
             win.entry_resuelvo.setProperty("html", html_full)
             win.entry_resuelvo.setHtml(html_full)
         _set(win.entry_firmantes, self.firmantes)
@@ -184,7 +188,11 @@ class CausaData:
         self.fiscal_sexo     = "F" if sw.rb_fiscal_f.isChecked() else "M"
         self.fecha_audiencia = sw.var_dia_audiencia.text().strip()
         self.n_imputados     = sw.var_num_imputados.value()
-        self.resuelvo = sw.var_resuelvo.property("html") or ""
+        html_full = sw.var_resuelvo.property("html") or ""
+        self.resuelvo_html = html_full
+        from PySide6.QtGui import QTextDocument
+        doc = QTextDocument(); doc.setHtml(html_full)
+        self.resuelvo = doc.toPlainText().replace("\n", " ")
 
         old = list(self.imputados)
         self.imputados.clear()
@@ -236,10 +244,16 @@ class CausaData:
         (sw.rb_fiscal_f if self.fiscal_sexo == 'F' else sw.rb_fiscal_m).setChecked(True)
         sw.var_dia_audiencia.setText(self.fecha_audiencia)
         sw.var_num_imputados.setValue(self.n_imputados)
-        sw.var_resuelvo.setProperty("html", self.resuelvo)
-        sw.var_resuelvo.setHtml(self.resuelvo)
+        html_full = getattr(self, "resuelvo_html", self.resuelvo)
+        sw.var_resuelvo.setProperty("html", html_full)
+        if hasattr(sw.var_resuelvo, "setHtml"):
+            sw.var_resuelvo.setHtml(html_full)
+        else:
+            from PySide6.QtGui import QTextDocument
+            doc = QTextDocument(); doc.setHtml(html_full)
+            sw.var_resuelvo.setText(doc.toPlainText().replace("\n", " "))
 
-            # ── asegurémonos de que las pestañas de imputados existen ────────
+        # ── asegurémonos de que las pestañas de imputados existen ────────
         sw.update_imputados_section()
 
         # 2) Luego volcamos LOS DATOS de imputados (como te propuse antes)
