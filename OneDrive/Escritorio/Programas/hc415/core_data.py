@@ -136,10 +136,7 @@ class CausaData:
             blocker = QSignalBlocker(win.entry_resuelvo)
             html_full = (self.resuelvo or getattr(self, "resuelvo_html", ""))
             win.entry_resuelvo.setProperty("html", html_full)
-            from PySide6.QtGui import QTextDocument
-            doc = QTextDocument(); doc.setHtml(html_full)
-            preview = doc.toPlainText().replace("\n", " ")[:200]
-            win.entry_resuelvo.setPlainText(preview)
+            win.entry_resuelvo.setHtml(html_full)
         _set(win.entry_firmantes, self.firmantes)
         _setc(win.combo_renuncia, "Sí" if self.renuncia else "No")
         # Evito que al cambiar combo_n se dispare update_template() → data.from_main()
@@ -240,6 +237,7 @@ class CausaData:
         sw.var_dia_audiencia.setText(self.fecha_audiencia)
         sw.var_num_imputados.setValue(self.n_imputados)
         sw.var_resuelvo.setProperty("html", self.resuelvo)
+        sw.var_resuelvo.setHtml(self.resuelvo)
 
             # ── asegurémonos de que las pestañas de imputados existen ────────
         sw.update_imputados_section()
