@@ -83,7 +83,11 @@ class CausaData:
         self.funcionario     = getattr(win, "entry_funcionario",  None).text() if hasattr(win, "entry_funcionario") else self.funcionario
         self.fiscal_nombre   = getattr(win, "entry_fiscal",       None).text() if hasattr(win, "entry_fiscal") else self.fiscal_nombre
         self.sentencia_num   = getattr(win, "entry_sentencia",    None).text() if hasattr(win, "entry_sentencia") else self.sentencia_num
-        self.resuelvo        = getattr(win, "entry_resuelvo",     None).toHtml() if hasattr(win, "entry_resuelvo") else self.resuelvo
+        if hasattr(win, "entry_resuelvo"):
+            self.resuelvo = (
+                win.entry_resuelvo.property("html")
+                or win.entry_resuelvo.toHtml()
+            )
         self.firmantes       = getattr(win, "entry_firmantes",    None).text() if hasattr(win, "entry_firmantes") else self.firmantes
         self.renuncia        = getattr(win, "combo_renuncia",     None).currentText() == "Sí" if hasattr(win, "combo_renuncia") else self.renuncia
         self.n_imputados     = int(getattr(win, "combo_n",        None).currentText()) if hasattr(win, "combo_n") else self.n_imputados
