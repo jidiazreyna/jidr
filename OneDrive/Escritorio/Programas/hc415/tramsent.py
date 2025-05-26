@@ -14,7 +14,8 @@ from functools import partial
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit,
     QComboBox, QSpinBox, QRadioButton, QButtonGroup, QPushButton,
-    QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog, QDialogButtonBox, QSizePolicy, QToolBox
+    QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog,
+    QDialogButtonBox, QSizePolicy, QToolButton
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
@@ -324,6 +325,32 @@ ORDINALES_HECHOS = [
     "Decimocuarto",
     "Decimoquinto"
 ]
+
+
+class CollapsibleGroup(QWidget):
+    """Widget con un botón tipo sección desplegable."""
+
+    def __init__(self, title: str, parent=None):
+        super().__init__(parent)
+        self.toggle_button = QToolButton(text=title, checkable=True)
+        self.toggle_button.setChecked(False)
+        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.toggle_button.setArrowType(Qt.RightArrow)
+        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.clicked.connect(self._on_toggled)
+
+        self.content_area = QWidget()
+        self.content_area.setVisible(False)
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+
+    def _on_toggled(self, checked: bool):
+        self.toggle_button.setArrowType(Qt.DownArrow if checked else Qt.RightArrow)
+        self.content_area.setVisible(checked)
 
 
 class SentenciaWidget(QWidget):
@@ -1199,8 +1226,16 @@ class SentenciaWidget(QWidget):
         # Mantenemos los campos pegados al inicio para evitar que se
         # distribuyan por toda la altura disponible
         self.left_layout.setAlignment(Qt.AlignTop)
-        self.toolbox = QToolBox()
-        self.left_layout.addWidget(self.toolbox)
+        # Grupos colapsables al estilo del explorador de archivos
+        self.general_group = CollapsibleGroup("Datos generales")
+        self.imputados_group = CollapsibleGroup("Imputados")
+        self.hechos_group = CollapsibleGroup("Hechos")
+        self.extra_group = CollapsibleGroup("Otras opciones")
+
+        for grp in (self.general_group, self.imputados_group,
+                    self.hechos_group, self.extra_group):
+            self.left_layout.addWidget(grp)
+
         self.left_scroll.setWidget(self.left_container)
         # Reducimos el ancho mínimo para que la interfaz sea visible incluso
         # cuando la ventana no está en pantalla completa
@@ -1277,7 +1312,7 @@ class SentenciaWidget(QWidget):
         # ------------------------------------------------------------------
         #  Resto de tu configuración del formulario (idéntica a la tuya)
         # ------------------------------------------------------------------
-        general_page = QWidget()
+        general_page = self.general_group.content_area
         general_layout = QGridLayout(general_page)
         general_layout.setColumnStretch(0, 1)
         general_layout.setColumnStretch(1, 3)
@@ -1337,9 +1372,10 @@ class SentenciaWidget(QWidget):
         # Evitamos que el layout distribuya el espacio extra entre las filas
         general_layout.setRowStretch(row, 1)
 
-        self.toolbox.addItem(general_page, "Datos generales")
+        # Contenido del grupo "Datos generales"
+        self.general_group.content_area.setLayout(general_layout)
 
-        imputados_page = QWidget()
+        imputados_page = self.imputados_group.content_area
         imp_layout = QGridLayout(imputados_page)
         imp_layout.setColumnStretch(0, 1)
         imp_layout.setColumnStretch(1, 3)
@@ -1360,9 +1396,9 @@ class SentenciaWidget(QWidget):
         row += 1
         imp_layout.setRowStretch(row, 1)
 
-        self.toolbox.addItem(imputados_page, "Imputados")
+        self.imputados_group.content_area.setLayout(imp_layout)
 
-        hechos_page = QWidget()
+        hechos_page = self.hechos_group.content_area
         hechos_layout = QGridLayout(hechos_page)
         hechos_layout.setColumnStretch(0, 1)
         hechos_layout.setColumnStretch(1, 3)
@@ -1383,9 +1419,9 @@ class SentenciaWidget(QWidget):
         row += 1
         hechos_layout.setRowStretch(row, 1)
 
-        self.toolbox.addItem(hechos_page, "Hechos")
+        self.hechos_group.content_area.setLayout(hechos_layout)
 
-        extra_page = QWidget()
+        extra_page = self.extra_group.content_area
         extra_layout = QGridLayout(extra_page)
         extra_layout.setColumnStretch(0, 1)
         extra_layout.setColumnStretch(1, 3)
@@ -1481,7 +1517,7 @@ class SentenciaWidget(QWidget):
         row += 1
         extra_layout.setRowStretch(row, 1)
 
-        self.toolbox.addItem(extra_page, "Otras opciones")
+        self.extra_group.content_area.setLayout(extra_layout)
 
         self.data.apply_to_sentencia(self)
 
