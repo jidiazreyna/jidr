@@ -1194,10 +1194,14 @@ class SentenciaWidget(QWidget):
 
         self.left_container = QWidget()
         self.left_layout    = QVBoxLayout(self.left_container)
+        # Compactamos el espacio vertical en el panel izquierdo
+        self.left_layout.setSpacing(4)
         self.toolbox = QToolBox()
         self.left_layout.addWidget(self.toolbox)
         self.left_scroll.setWidget(self.left_container)
-        self.left_container.setMinimumWidth(600)
+        # Reducimos el ancho mínimo para que la interfaz sea visible incluso
+        # cuando la ventana no está en pantalla completa
+        self.left_container.setMinimumWidth(450)
 
         main_layout.addWidget(self.left_scroll, 2)
 
@@ -1226,7 +1230,9 @@ class SentenciaWidget(QWidget):
         self.texto_plantilla.setReadOnly(True)
         self.texto_plantilla.setAlignment(Qt.AlignJustify)
         self.texto_plantilla.setStyleSheet("font-family:'Times New Roman';")
-        self.texto_plantilla.setMinimumWidth(600)
+        # Un ancho más reducido permite que toda la aplicación se ajuste a
+        # resoluciones menores sin necesidad de maximizar la ventana
+        self.texto_plantilla.setMinimumWidth(500)
         opt = self.texto_plantilla.document().defaultTextOption()
         opt.setAlignment(Qt.AlignJustify)
         self.texto_plantilla.document().setDefaultTextOption(opt)
@@ -1273,6 +1279,8 @@ class SentenciaWidget(QWidget):
         general_layout.setColumnStretch(0, 1)
         general_layout.setColumnStretch(1, 3)
         general_layout.setColumnStretch(2, 1)
+        # Menor espacio vertical entre filas para compactar el formulario
+        general_layout.setVerticalSpacing(2)
 
         row = 0
         lbl_loc = QLabel("Localidad:")
@@ -1329,6 +1337,7 @@ class SentenciaWidget(QWidget):
         imp_layout = QGridLayout(imputados_page)
         imp_layout.setColumnStretch(0, 1)
         imp_layout.setColumnStretch(1, 3)
+        imp_layout.setVerticalSpacing(2)
 
         row = 0
         lbl_numimp = QLabel("Número de imputados:")
@@ -1349,6 +1358,7 @@ class SentenciaWidget(QWidget):
         hechos_layout = QGridLayout(hechos_page)
         hechos_layout.setColumnStretch(0, 1)
         hechos_layout.setColumnStretch(1, 3)
+        hechos_layout.setVerticalSpacing(2)
 
         row = 0
         lbl_numhec = QLabel("Número de hechos:")
@@ -1370,6 +1380,7 @@ class SentenciaWidget(QWidget):
         extra_layout.setColumnStretch(0, 1)
         extra_layout.setColumnStretch(1, 3)
         extra_layout.setColumnStretch(2, 1)
+        extra_layout.setVerticalSpacing(2)
 
         row = 0
         lbl_sujev = QLabel("Sujeto eventual:")
