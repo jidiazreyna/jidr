@@ -332,15 +332,20 @@ class CollapsibleGroup(QWidget):
 
     def __init__(self, title: str, parent=None):
         super().__init__(parent)
-        self.toggle_button = QToolButton(text=title, checkable=True)
+
+        self._title = title
+        self.toggle_button = QToolButton(checkable=True)
         self.toggle_button.setChecked(False)
-        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.toggle_button.setArrowType(Qt.RightArrow)
-        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        self.toggle_button.setArrowType(Qt.NoArrow)
+        self.toggle_button.setStyleSheet(
+            "QToolButton { border: none; padding:4px; font-weight:bold; }"
+        )
         self.toggle_button.clicked.connect(self._on_toggled)
 
         self.content_area = QWidget()
         self.content_area.setVisible(False)
+        self.content_area.setStyleSheet("padding:4px;")
 
         lay = QVBoxLayout(self)
         lay.setSpacing(0)
@@ -348,8 +353,24 @@ class CollapsibleGroup(QWidget):
         lay.addWidget(self.toggle_button)
         lay.addWidget(self.content_area)
 
+        # Estilo general para resaltar cada bloque
+        self.setStyleSheet(
+            "CollapsibleGroup {"
+            "border:1px solid #ccc;"
+            "border-radius:5px;"
+            "background-color:#f7f7f7;"
+            "margin-top:4px;"
+            "}"
+        )
+
+        self._update_button_text()
+
+    def _update_button_text(self):
+        arrow = "▼" if self.toggle_button.isChecked() else "▶"
+        self.toggle_button.setText(f"{arrow} {self._title}")
+
     def _on_toggled(self, checked: bool):
-        self.toggle_button.setArrowType(Qt.DownArrow if checked else Qt.RightArrow)
+        self._update_button_text()
         self.content_area.setVisible(checked)
 
 
