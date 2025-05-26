@@ -1333,6 +1333,9 @@ class SentenciaWidget(QWidget):
         lbl_dia = QLabel("Día de audiencia:")
         general_layout.addWidget(lbl_dia, row, 0)
         general_layout.addWidget(self.var_dia_audiencia, row, 1)
+        row += 1
+        # Evitamos que el layout distribuya el espacio extra entre las filas
+        general_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(general_page, "Datos generales")
 
@@ -1354,6 +1357,8 @@ class SentenciaWidget(QWidget):
         self.imputados_container = QWidget()
         self.imputados_layout = QVBoxLayout(self.imputados_container)
         imp_layout.addWidget(self.imputados_container, row, 0, 1, 2)
+        row += 1
+        imp_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(imputados_page, "Imputados")
 
@@ -1375,6 +1380,8 @@ class SentenciaWidget(QWidget):
         self.hechos_container = QWidget()
         self.hechos_layout = QVBoxLayout(self.hechos_container)
         hechos_layout.addWidget(self.hechos_container, row, 0, 1, 2)
+        row += 1
+        hechos_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(hechos_page, "Hechos")
 
@@ -1471,6 +1478,8 @@ class SentenciaWidget(QWidget):
         self.var_resuelvo.setVisible(False)
         self.btn_resuelvo = QPushButton("Editar resuelvo")
         extra_layout.addWidget(self.btn_resuelvo, row, 1)
+        row += 1
+        extra_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(extra_page, "Otras opciones")
 
@@ -1745,6 +1754,7 @@ class SentenciaWidget(QWidget):
             # Lo agregamos al layout, igual que 'datos' y 'condiciones':
             layout.addWidget(lbl_pautas, 13, 0)
             layout.addWidget(btn_pautas, 13, 1, 1, 3)
+            layout.setRowStretch(layout.rowCount(), 1)
 
             if idx-1 < len(self.data.imputados):
                 dprev = self.data.imputados[idx-1]
@@ -1835,7 +1845,8 @@ class SentenciaWidget(QWidget):
             le_fec = QLineEdit()
             layout.addWidget(lbl_fec, next_row, 0)
             layout.addWidget(le_fec, next_row, 1, 1, 1)
-            
+            layout.setRowStretch(layout.rowCount(), 1)
+
             container.setLayout(layout)
             self.hechos_layout.addWidget(container)
             for w in [le_desc, le_aclar, le_ofi, le_auto, le_fec]:
