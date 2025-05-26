@@ -1195,7 +1195,10 @@ class SentenciaWidget(QWidget):
         self.left_container = QWidget()
         self.left_layout    = QVBoxLayout(self.left_container)
         # Compactamos el espacio vertical en el panel izquierdo
-        self.left_layout.setSpacing(4)
+        self.left_layout.setSpacing(2)
+        # Mantenemos los campos pegados al inicio para evitar que se
+        # distribuyan por toda la altura disponible
+        self.left_layout.setAlignment(Qt.AlignTop)
         self.toolbox = QToolBox()
         self.left_layout.addWidget(self.toolbox)
         self.left_scroll.setWidget(self.left_container)
@@ -1280,7 +1283,7 @@ class SentenciaWidget(QWidget):
         general_layout.setColumnStretch(1, 3)
         general_layout.setColumnStretch(2, 1)
         # Menor espacio vertical entre filas para compactar el formulario
-        general_layout.setVerticalSpacing(2)
+        general_layout.setVerticalSpacing(1)
 
         row = 0
         lbl_loc = QLabel("Localidad:")
@@ -1330,6 +1333,9 @@ class SentenciaWidget(QWidget):
         lbl_dia = QLabel("Día de audiencia:")
         general_layout.addWidget(lbl_dia, row, 0)
         general_layout.addWidget(self.var_dia_audiencia, row, 1)
+        row += 1
+        # Evitamos que el layout distribuya el espacio extra entre las filas
+        general_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(general_page, "Datos generales")
 
@@ -1337,7 +1343,7 @@ class SentenciaWidget(QWidget):
         imp_layout = QGridLayout(imputados_page)
         imp_layout.setColumnStretch(0, 1)
         imp_layout.setColumnStretch(1, 3)
-        imp_layout.setVerticalSpacing(2)
+        imp_layout.setVerticalSpacing(1)
 
         row = 0
         lbl_numimp = QLabel("Número de imputados:")
@@ -1351,6 +1357,8 @@ class SentenciaWidget(QWidget):
         self.imputados_container = QWidget()
         self.imputados_layout = QVBoxLayout(self.imputados_container)
         imp_layout.addWidget(self.imputados_container, row, 0, 1, 2)
+        row += 1
+        imp_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(imputados_page, "Imputados")
 
@@ -1358,7 +1366,7 @@ class SentenciaWidget(QWidget):
         hechos_layout = QGridLayout(hechos_page)
         hechos_layout.setColumnStretch(0, 1)
         hechos_layout.setColumnStretch(1, 3)
-        hechos_layout.setVerticalSpacing(2)
+        hechos_layout.setVerticalSpacing(1)
 
         row = 0
         lbl_numhec = QLabel("Número de hechos:")
@@ -1372,6 +1380,8 @@ class SentenciaWidget(QWidget):
         self.hechos_container = QWidget()
         self.hechos_layout = QVBoxLayout(self.hechos_container)
         hechos_layout.addWidget(self.hechos_container, row, 0, 1, 2)
+        row += 1
+        hechos_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(hechos_page, "Hechos")
 
@@ -1380,7 +1390,7 @@ class SentenciaWidget(QWidget):
         extra_layout.setColumnStretch(0, 1)
         extra_layout.setColumnStretch(1, 3)
         extra_layout.setColumnStretch(2, 1)
-        extra_layout.setVerticalSpacing(2)
+        extra_layout.setVerticalSpacing(1)
 
         row = 0
         lbl_sujev = QLabel("Sujeto eventual:")
@@ -1468,6 +1478,8 @@ class SentenciaWidget(QWidget):
         self.var_resuelvo.setVisible(False)
         self.btn_resuelvo = QPushButton("Editar resuelvo")
         extra_layout.addWidget(self.btn_resuelvo, row, 1)
+        row += 1
+        extra_layout.setRowStretch(row, 1)
 
         self.toolbox.addItem(extra_page, "Otras opciones")
 
@@ -1643,6 +1655,8 @@ class SentenciaWidget(QWidget):
             idx = len(self.imputados) + 1
             container = QWidget()
             layout = QGridLayout(container)
+            layout.setVerticalSpacing(1)
+            layout.setVerticalSpacing(1)
             lbl_nombre = QLabel(f"Imputado/a #{idx} - Nombre:")
             le_nombre = QLineEdit()
             layout.addWidget(lbl_nombre, 0, 0)
@@ -1740,6 +1754,7 @@ class SentenciaWidget(QWidget):
             # Lo agregamos al layout, igual que 'datos' y 'condiciones':
             layout.addWidget(lbl_pautas, 13, 0)
             layout.addWidget(btn_pautas, 13, 1, 1, 3)
+            layout.setRowStretch(layout.rowCount(), 1)
 
             if idx-1 < len(self.data.imputados):
                 dprev = self.data.imputados[idx-1]
@@ -1830,7 +1845,8 @@ class SentenciaWidget(QWidget):
             le_fec = QLineEdit()
             layout.addWidget(lbl_fec, next_row, 0)
             layout.addWidget(le_fec, next_row, 1, 1, 1)
-            
+            layout.setRowStretch(layout.rowCount(), 1)
+
             container.setLayout(layout)
             self.hechos_layout.addWidget(container)
             for w in [le_desc, le_aclar, le_ofi, le_auto, le_fec]:
