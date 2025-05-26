@@ -14,7 +14,7 @@ from functools import partial
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit,
     QComboBox, QSpinBox, QRadioButton, QButtonGroup, QPushButton,
-    QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog, QDialogButtonBox, QSizePolicy
+    QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog, QDialogButtonBox, QSizePolicy, QToolBox
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
@@ -336,6 +336,8 @@ class SentenciaWidget(QWidget):
 
         # para resaltar cambios en la plantilla
         self._prev_plain = ""
+        # widgets que resaltarán secciones de la plantilla al enfocarse
+        self._focus_highlight_map = {}
 
         self.data = data
         # ───────────────────────────────────────────────
@@ -391,6 +393,9 @@ class SentenciaWidget(QWidget):
             lambda t: setattr(self.data, "tribunal", t.strip())
         )
         self.var_tribunal.currentTextChanged.connect(self.actualizar_plantilla)
+        self.install_focus_highlight(self.var_tribunal, lambda: self.var_tribunal.currentText())
+        if self.var_tribunal.lineEdit():
+            self.install_focus_highlight(self.var_tribunal.lineEdit(), lambda: self.var_tribunal.currentText())
 
         # Sala
         self.var_sala = QComboBox()
@@ -409,6 +414,9 @@ class SentenciaWidget(QWidget):
         self.var_sala.currentTextChanged.connect(
             lambda t: setattr(self.data, "sala", t.strip())
         )
+        self.install_focus_highlight(self.var_sala, lambda: self.var_sala.currentText())
+        if self.var_sala.lineEdit():
+            self.install_focus_highlight(self.var_sala.lineEdit(), lambda: self.var_sala.currentText())
 
         # ───────────────────────────────────────────────
         # 2) INTERVINIENTES
@@ -629,6 +637,34 @@ class SentenciaWidget(QWidget):
         # El resaltado se limpiará automáticamente tras 3 segundos
         self._clear_highlight_timer.start(3000)
 
+    def _highlight_section_text(self, text: str) -> None:
+        """Resalta todas las apariciones de ``text`` en la plantilla."""
+        from PySide6.QtGui import QTextCursor, QTextCharFormat, QBrush
+
+        cursor = QTextCursor(self.texto_plantilla.document())
+
+        fmt_clear = QTextCharFormat()
+        fmt_clear.setBackground(QBrush(Qt.transparent))
+        cursor.select(QTextCursor.Document)
+        cursor.mergeCharFormat(fmt_clear)
+        self._clear_highlight_timer.stop()
+
+        if not text:
+            return
+
+        plain = self.texto_plantilla.toPlainText()
+        text_lower = text.lower()
+        pos = plain.lower().find(text_lower)
+        fmt = QTextCharFormat()
+        fmt.setBackground(QBrush(Qt.yellow))
+        while pos != -1:
+            cursor.setPosition(pos)
+            cursor.setPosition(pos + len(text), QTextCursor.KeepAnchor)
+            cursor.mergeCharFormat(fmt)
+            pos = plain.lower().find(text_lower, pos + len(text))
+
+        self._clear_highlight_timer.start(3000)
+
     def _clear_highlight(self) -> None:
         """Quita el resaltado preservando la posición de scroll."""
         from PySide6.QtGui import QTextCursor, QTextCharFormat, QBrush
@@ -677,6 +713,20 @@ class SentenciaWidget(QWidget):
             texto = texto.replace("\n", " ")
 
         return texto.strip()
+
+    def install_focus_highlight(self, widget, text_getter):
+        """Destaca la sección correspondiente al obtener foco."""
+        widget.installEventFilter(self)
+        self._focus_highlight_map[widget] = text_getter
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.FocusIn and obj in self._focus_highlight_map:
+            try:
+                text = self._focus_highlight_map[obj]()
+            except Exception:
+                text = ""
+            self._highlight_section_text(text)
+        return super().eventFilter(obj, event)
     
     def _rich_text_dialog_italic_only(self, title: str, initial_html: str, on_accept):
         dlg = QDialog(self); dlg.setWindowTitle(title); dlg.resize(650, 420)
@@ -1143,7 +1193,9 @@ class SentenciaWidget(QWidget):
         self.left_scroll.setWidgetResizable(True)
 
         self.left_container = QWidget()
-        self.left_layout    = QGridLayout(self.left_container)
+        self.left_layout    = QVBoxLayout(self.left_container)
+        self.toolbox = QToolBox()
+        self.left_layout.addWidget(self.toolbox)
         self.left_scroll.setWidget(self.left_container)
         self.left_container.setMinimumWidth(600)
 
@@ -1216,194 +1268,199 @@ class SentenciaWidget(QWidget):
         # ------------------------------------------------------------------
         #  Resto de tu configuración del formulario (idéntica a la tuya)
         # ------------------------------------------------------------------
-        self.left_layout.setColumnStretch(0, 1)
-        self.left_layout.setColumnStretch(1, 3)
-        self.left_layout.setColumnStretch(2, 1)
+        general_page = QWidget()
+        general_layout = QGridLayout(general_page)
+        general_layout.setColumnStretch(0, 1)
+        general_layout.setColumnStretch(1, 3)
+        general_layout.setColumnStretch(2, 1)
 
         row = 0
-        # NUEVO: Localidad
         lbl_loc = QLabel("Localidad:")
-        self.left_layout.addWidget(lbl_loc, row, 0)
-        self.left_layout.addWidget(self.var_localidad, row, 1)
+        general_layout.addWidget(lbl_loc, row, 0)
+        general_layout.addWidget(self.var_localidad, row, 1)
         row += 1
 
-        # Carátula
         lbl_car = QLabel("Carátula:")
-        self.left_layout.addWidget(lbl_car, row, 0)
-        self.left_layout.addWidget(self.var_caratula, row, 1)
+        general_layout.addWidget(lbl_car, row, 0)
+        general_layout.addWidget(self.var_caratula, row, 1)
         row += 1
 
-        # Tribunal
         lbl_trib = QLabel("Tribunal:")
-        self.left_layout.addWidget(lbl_trib, row, 0)
-
+        general_layout.addWidget(lbl_trib, row, 0)
         hbox_trib = QHBoxLayout()
-        hbox_trib.addWidget(self.var_tribunal)         # el QLineEdit
-        self.left_layout.addLayout(hbox_trib, row, 1)
+        hbox_trib.addWidget(self.var_tribunal)
+        general_layout.addLayout(hbox_trib, row, 1)
         row += 1
 
-        # Sala
         lbl_sala = QLabel("Sala:")
-        self.left_layout.addWidget(lbl_sala, row, 0)
-        self.left_layout.addWidget(self.var_sala, row, 1)
+        general_layout.addWidget(lbl_sala, row, 0)
+        general_layout.addWidget(self.var_sala, row, 1)
         row += 1
 
-        # Juez
         lbl_juez = QLabel("Juez:")
-        self.left_layout.addWidget(lbl_juez, row, 0)
-
-        # Layout horizontal para nombre + M/F + juez/vocal
+        general_layout.addWidget(lbl_juez, row, 0)
         hbox_juez = QHBoxLayout()
-        hbox_juez.addWidget(self.var_juez)        # campo de nombre
-        hbox_juez.addWidget(self.rb_juez_m)       # botón M
-        hbox_juez.addWidget(self.rb_juez_f)       # botón F
-
-        # Botón conmutador para cargo (juez / vocal)
+        hbox_juez.addWidget(self.var_juez)
+        hbox_juez.addWidget(self.rb_juez_m)
+        hbox_juez.addWidget(self.rb_juez_f)
         self.boton_cargo_juez = QPushButton("juez")
         self.boton_cargo_juez.setCheckable(True)
         self.boton_cargo_juez.clicked.connect(self.toggle_cargo_juez)
-        hbox_juez.addWidget(self.boton_cargo_juez)  # lo agregás al mismo hbox
-
-        # Insertás todo en el layout
-        self.left_layout.addLayout(hbox_juez, row, 1)
+        hbox_juez.addWidget(self.boton_cargo_juez)
+        general_layout.addLayout(hbox_juez, row, 1)
         row += 1
 
-        # Fiscal
         lbl_fisc = QLabel("Fiscal:")
-        self.left_layout.addWidget(lbl_fisc, row, 0)
+        general_layout.addWidget(lbl_fisc, row, 0)
         hbox_fisc = QHBoxLayout()
         hbox_fisc.addWidget(self.var_fiscal)
         hbox_fisc.addWidget(self.rb_fiscal_m)
         hbox_fisc.addWidget(self.rb_fiscal_f)
-        self.left_layout.addLayout(hbox_fisc, row, 1)
+        general_layout.addLayout(hbox_fisc, row, 1)
         row += 1
 
         lbl_dia = QLabel("Día de audiencia:")
-        self.left_layout.addWidget(lbl_dia, row, 0)
-        self.left_layout.addWidget(self.var_dia_audiencia, row, 1)
-        row += 1
+        general_layout.addWidget(lbl_dia, row, 0)
+        general_layout.addWidget(self.var_dia_audiencia, row, 1)
 
+        self.toolbox.addItem(general_page, "Datos generales")
+
+        imputados_page = QWidget()
+        imp_layout = QGridLayout(imputados_page)
+        imp_layout.setColumnStretch(0, 1)
+        imp_layout.setColumnStretch(1, 3)
+
+        row = 0
         lbl_numimp = QLabel("Número de imputados:")
-        self.left_layout.addWidget(lbl_numimp, row, 0)
-        self.left_layout.addWidget(self.var_num_imputados, row, 1)
+        imp_layout.addWidget(lbl_numimp, row, 0)
+        imp_layout.addWidget(self.var_num_imputados, row, 1)
         row += 1
 
-        # Imputados
-        row += 1
         lbl_imp = QLabel("Imputados:")
-        self.left_layout.addWidget(lbl_imp, row, 0, 1, 2)
+        imp_layout.addWidget(lbl_imp, row, 0, 1, 2)
         row += 1
         self.imputados_container = QWidget()
         self.imputados_layout = QVBoxLayout(self.imputados_container)
-        self.left_layout.addWidget(self.imputados_container, row, 0, 1, 2)
-        row += 1
+        imp_layout.addWidget(self.imputados_container, row, 0, 1, 2)
 
+        self.toolbox.addItem(imputados_page, "Imputados")
+
+        hechos_page = QWidget()
+        hechos_layout = QGridLayout(hechos_page)
+        hechos_layout.setColumnStretch(0, 1)
+        hechos_layout.setColumnStretch(1, 3)
+
+        row = 0
         lbl_numhec = QLabel("Número de hechos:")
-        self.left_layout.addWidget(lbl_numhec, row, 0)
-        self.left_layout.addWidget(self.var_num_hechos, row, 1)
+        hechos_layout.addWidget(lbl_numhec, row, 0)
+        hechos_layout.addWidget(self.var_num_hechos, row, 1)
         row += 1
 
         lbl_hec = QLabel("Hechos:")
-        self.left_layout.addWidget(lbl_hec, row, 0, 1, 3)
+        hechos_layout.addWidget(lbl_hec, row, 0, 1, 2)
         row += 1
         self.hechos_container = QWidget()
         self.hechos_layout = QVBoxLayout(self.hechos_container)
-        self.left_layout.addWidget(self.hechos_container, row, 0, 1, 3)
-        row += 1
+        hechos_layout.addWidget(self.hechos_container, row, 0, 1, 2)
 
+        self.toolbox.addItem(hechos_page, "Hechos")
+
+        extra_page = QWidget()
+        extra_layout = QGridLayout(extra_page)
+        extra_layout.setColumnStretch(0, 1)
+        extra_layout.setColumnStretch(1, 3)
+        extra_layout.setColumnStretch(2, 1)
+
+        row = 0
         lbl_sujev = QLabel("Sujeto eventual:")
-        self.left_layout.addWidget(lbl_sujev, row, 0)
-        self.left_layout.addWidget(self.var_sujeto_eventual, row, 1)
+        extra_layout.addWidget(lbl_sujev, row, 0)
+        extra_layout.addWidget(self.var_sujeto_eventual, row, 1)
         row += 1
 
         lbl_manif = QLabel("Manifestaciones (del sujeto):")
-        self.left_layout.addWidget(lbl_manif, row, 0)
-        self.left_layout.addWidget(self.var_manifestacion, row, 1)
+        extra_layout.addWidget(lbl_manif, row, 0)
+        extra_layout.addWidget(self.var_manifestacion, row, 1)
         row += 1
 
         lbl_vic = QLabel("Víctima:")
-        self.left_layout.addWidget(lbl_vic, row, 0)
+        extra_layout.addWidget(lbl_vic, row, 0)
         h_box_victima = QHBoxLayout()
         h_box_victima.addWidget(self.var_victima)
         h_box_victima.addWidget(self.var_victima_plural)
-        self.left_layout.addLayout(h_box_victima, row, 1)
+        extra_layout.addLayout(h_box_victima, row, 1)
         row += 1
 
         lbl_vicmani = QLabel("Manifestación (víctima):")
-        self.left_layout.addWidget(lbl_vicmani, row, 0)
-        self.left_layout.addWidget(self.var_victima_manifestacion, row, 1)
+        extra_layout.addWidget(lbl_vicmani, row, 0)
+        extra_layout.addWidget(self.var_victima_manifestacion, row, 1)
         row += 1
 
         lbl_prueba = QLabel("Pruebas:")
-        self.left_layout.addWidget(lbl_prueba, row, 0)
-        self.left_layout.addWidget(self.btn_prueba, row, 1)
+        extra_layout.addWidget(lbl_prueba, row, 0)
+        extra_layout.addWidget(self.btn_prueba, row, 1)
         row += 1
 
         lbl_pruebrel = QLabel("Pruebas relevantes:")
-        self.left_layout.addWidget(lbl_pruebrel, row, 0)
-        self.left_layout.addWidget(self.btn_pruebas_importantes, row, 1)
+        extra_layout.addWidget(lbl_pruebrel, row, 0)
+        extra_layout.addWidget(self.btn_pruebas_importantes, row, 1)
         row += 1
 
-
         lbl_alegfis = QLabel("Alegato fiscal:")
-        self.left_layout.addWidget(lbl_alegfis, row, 0)
-        self.left_layout.addWidget(self.btn_alegato_fiscal, row, 1)
+        extra_layout.addWidget(lbl_alegfis, row, 0)
+        extra_layout.addWidget(self.btn_alegato_fiscal, row, 1)
         row += 1
 
         lbl_alegdef = QLabel("Alegato de la defensa:")
-        self.left_layout.addWidget(lbl_alegdef, row, 0)
-        self.left_layout.addWidget(self.btn_alegato_defensa, row, 1)
+        extra_layout.addWidget(lbl_alegdef, row, 0)
+        extra_layout.addWidget(self.btn_alegato_defensa, row, 1)
         row += 1
 
         lbl_calif = QLabel("Calificación legal:")
-        self.left_layout.addWidget(lbl_calif, row, 0)
-        self.left_layout.addWidget(self.var_calificacion_legal, row, 1)
+        extra_layout.addWidget(lbl_calif, row, 0)
+        extra_layout.addWidget(self.var_calificacion_legal, row, 1)
         row += 1
 
         lbl_corr = QLabel("Correcciones de calificación:")
-        self.left_layout.addWidget(lbl_corr, row, 0)
-        self.left_layout.addWidget(self.var_correccion_calif, row, 1)
+        extra_layout.addWidget(lbl_corr, row, 0)
+        extra_layout.addWidget(self.var_correccion_calif, row, 1)
         row += 1
 
         lbl_casovf = QLabel("¿Es un caso de VF o G?")
-        self.left_layout.addWidget(lbl_casovf, row, 0)
-        self.left_layout.addWidget(self.var_caso_vf, row, 1)
+        extra_layout.addWidget(lbl_casovf, row, 0)
+        extra_layout.addWidget(self.var_caso_vf, row, 1)
         row += 1
 
         lbl_uso_pot = QLabel("¿Se usó términos potenciales?")
-        self.left_layout.addWidget(lbl_uso_pot, row, 0)
-        self.left_layout.addWidget(self.var_uso_terminos_potenciales, row, 1)
+        extra_layout.addWidget(lbl_uso_pot, row, 0)
+        extra_layout.addWidget(self.var_uso_terminos_potenciales, row, 1)
         row += 1
 
         lbl_deco = QLabel("¿Decomiso?")
-        self.left_layout.addWidget(lbl_deco, row, 0)
-        self.left_layout.addWidget(self.var_decomiso_option, row, 1)
+        extra_layout.addWidget(lbl_deco, row, 0)
+        extra_layout.addWidget(self.var_decomiso_option, row, 1)
         btn_decomiso = QPushButton("Editar texto de Decomiso")
-        self.left_layout.addWidget(btn_decomiso, row, 2)
+        extra_layout.addWidget(btn_decomiso, row, 2)
         btn_decomiso.clicked.connect(self.abrir_ventana_decomiso)
         row += 1
 
         lbl_restr = QLabel("¿Restricción de contacto?")
-        self.left_layout.addWidget(lbl_restr, row, 0)
-        self.left_layout.addWidget(self.var_restriccion_option, row, 1)
+        extra_layout.addWidget(lbl_restr, row, 0)
+        extra_layout.addWidget(self.var_restriccion_option, row, 1)
         btn_restriccion = QPushButton("Editar texto de Restricción")
-        self.left_layout.addWidget(btn_restriccion, row, 2)
+        extra_layout.addWidget(btn_restriccion, row, 2)
         btn_restriccion.clicked.connect(self.abrir_ventana_restriccion)
         row += 1
 
-        # --- dentro de setup_ui ---
         lbl_res = QLabel("Resuelvo:")
-        self.left_layout.addWidget(lbl_res, row, 0)
-
-        self.var_resuelvo = QLineEdit()        # ← QLineEdit “fantasma”
-        self.var_resuelvo.setVisible(False)    #   (no ocupa lugar)
-
+        extra_layout.addWidget(lbl_res, row, 0)
+        self.var_resuelvo = QLineEdit()
+        self.var_resuelvo.setVisible(False)
         self.btn_resuelvo = QPushButton("Editar resuelvo")
-        self.left_layout.addWidget(self.btn_resuelvo, row, 1)
-        row += 1
+        extra_layout.addWidget(self.btn_resuelvo, row, 1)
+
+        self.toolbox.addItem(extra_page, "Otras opciones")
 
         self.data.apply_to_sentencia(self)
-        self.left_layout.setColumnStretch(1, 1)
 
     def generar_docx_con_html(self):
         """Genera un archivo DOCX respetando <p>, <b>, <i>... (parser básico)"""
