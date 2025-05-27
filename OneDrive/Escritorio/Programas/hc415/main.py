@@ -1210,7 +1210,7 @@ class MainWindow(QMainWindow):
         )
         plantilla2 = (
             "Con lo que dio por terminado el acto, el que previa lectura dada en alta voz "
-            "y ratificación de su contenido, firman el Sr. Juez y las partes, todo por "
+            "y ratificación de su contenido, firman las partes, todo por "
             "ante mí, de lo que doy fe."
         )
 
