@@ -28,7 +28,6 @@ from sentencia_window import SentenciaWindow
 from PySide6.QtGui import QTextDocument
 import re
 from PySide6.QtCore import QMimeData
-from PySide6.QtWidgets import QSpinBox
 from PySide6.QtWidgets import QHBoxLayout
 from widgets import NoWheelComboBox
 def _DEBUG_unicode(tag: str, txt: str, n: int = 120):
