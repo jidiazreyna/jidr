@@ -1546,29 +1546,8 @@ class SentenciaWidget(QWidget):
         import re
         import html
 
-        # 1) Recogemos el HTML
-        raw_html = self.texto_plantilla.toHtml()
-
-        # -- A) Reemplazar <span style="font-weight:700;"> -> <b> y </span> -> </b>
-        pattern_bold_open = re.compile(
-            r'<span[^>]*style="[^"]*font-weight\s*:\s*(?:bold|700)[^"]*"[^>]*>',
-            flags=re.IGNORECASE
-        )
-        raw_html = pattern_bold_open.sub("<b>", raw_html)
-        #   1) Cursiva  →  <i>…</i>
-        raw_html = re.sub(
-            r'<span[^>]*font-style\s*:\s*italic[^>]*>(.*?)</span>',
-            r'<i>\1</i>',
-            raw_html,
-            flags=re.IGNORECASE | re.DOTALL
-        )
-
-        #   2) Negrita  →  <b>…</b>
-        raw_html = re.sub(r'</span>', '</b>', raw_html, flags=re.IGNORECASE)
-        # -- B) Convertir <br> en espacio (o en salto de línea)
-        raw_html = re.sub(r'(?i)<br\s*/?>', ' ', raw_html)
-        # Opcional: si te queda un <br /> al final, también lo elimina:
-        raw_html = raw_html.strip()
+        # 1) Recogemos y sanitizamos el HTML
+        raw_html = _sanitize_html(self.texto_plantilla.toHtml())
 
         # 2) Comenzamos un nuevo document
         document = Document()
@@ -1611,9 +1590,8 @@ class SentenciaWidget(QWidget):
                     italic_active = False
                     continue
 
-                # Si es texto normal, añadimos un espacio final para evitar
-                # que se "junten" palabras:
-                run = p.add_run(t + " ")
+                # Texto normal
+                run = p.add_run(t)
                 run.font.name = "Times New Roman"
                 run.font.size = Pt(12)
                 run.bold = bold_active
