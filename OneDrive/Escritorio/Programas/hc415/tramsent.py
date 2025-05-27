@@ -2046,7 +2046,7 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
-            d = imp["datos"].text().strip()
+            d = (imp["datos"].property("html") or imp["datos"].text()).strip()
             # Armamos => "<b>Nombre</b>, datospersonales"
             comb = f"<b>{nm}</b>"
             if d:
@@ -2178,7 +2178,10 @@ class SentenciaWidget(QWidget):
 
         # Listado de hechos
         for i in range(n_hec):
-            desc_str = self.hechos[i]["descripcion"].text().strip()
+            desc_str = (
+                self.hechos[i]["descripcion"].property("html")
+                or self.hechos[i]["descripcion"].text()
+            ).strip()
             aclar_str = self.hechos[i]["aclaraciones"].text().strip()
             if n_hec == 1:
                 if aclar_str:
@@ -2394,7 +2397,10 @@ class SentenciaWidget(QWidget):
 
         for i, imp in enumerate(self.imputados):
             name_i = f"<b>{final_names_list[i]}</b>"
-            condiciones = imp["condiciones"].text().strip()
+            condiciones = (
+                imp["condiciones"].property("html")
+                or imp["condiciones"].text()
+            ).strip()
             verb = verbs[i % len(verbs)]
 
             if i == 0:
@@ -2917,7 +2923,9 @@ class SentenciaWidget(QWidget):
 
         for i, imp in enumerate(self.imputados):
             nm = final_names_list[i]
-            pautas_str = imp["pautas"].text().strip()
+            pautas_str = (
+                imp["pautas"].property("html") or imp["pautas"].text()
+            ).strip()
             intro = introductions[i % len(introductions)]
             verb = valuation_verbs[i % len(valuation_verbs)]
             if i == 0:
