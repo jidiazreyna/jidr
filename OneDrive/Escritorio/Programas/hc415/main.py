@@ -30,6 +30,7 @@ import re
 from PySide6.QtCore import QMimeData
 from PySide6.QtWidgets import QSpinBox
 from PySide6.QtWidgets import QHBoxLayout
+from widgets import NoWheelComboBox
 def _DEBUG_unicode(tag: str, txt: str, n: int = 120):
     # imprime los primeros “n” caracteres con su code-point
     print(f"\n{tag}:")
@@ -249,7 +250,7 @@ class MainWindow(QMainWindow):
         right_panel  = QWidget()
         right_layout = QVBoxLayout(right_panel)
 
-        self.selector_imp = QComboBox()
+        self.selector_imp = NoWheelComboBox()
         self.selector_imp.currentIndexChanged.connect(self.update_for_imp)
         right_layout.addWidget(self.selector_imp)
 
@@ -301,14 +302,14 @@ class MainWindow(QMainWindow):
 
         def add_combo(attr: str, text: str, items: list[str], editable=False) -> QComboBox:
             label(text)
-            cb = QComboBox(); cb.addItems(items); cb.setEditable(editable)
+            cb = NoWheelComboBox(); cb.addItems(items); cb.setEditable(editable)
             cb.currentIndexChanged.connect(self.update_template)
             cb.editTextChanged.connect(self.update_template)
             self.form.addWidget(cb, self._row, 1); self._row += 1
             setattr(self, attr, cb); return cb
 
         label("Número de imputados:")
-        self.combo_n = QComboBox(); self.combo_n.addItems([str(i) for i in range(1, 21)]); self.combo_n.currentIndexChanged.connect(self.update_template)
+        self.combo_n = NoWheelComboBox(); self.combo_n.addItems([str(i) for i in range(1, 21)]); self.combo_n.currentIndexChanged.connect(self.update_template)
 
         self.form.addWidget(self.combo_n, self._row, 1); self._row += 1
 
@@ -522,7 +523,7 @@ class MainWindow(QMainWindow):
                 return le
 
             def mk_combo(items, editable=False):
-                cb = QComboBox()
+                cb = NoWheelComboBox()
                 cb.addItems(items)
                 cb.setEditable(editable)
                 cb.currentIndexChanged.connect(self.update)

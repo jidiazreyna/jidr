@@ -22,8 +22,9 @@ from PySide6.QtGui import QIcon
 import ctypes
 from PySide6.QtCore import Qt, Signal 
 from core_data import CausaData
-from PySide6.QtWidgets import QDialog, QVBoxLayout     
+from PySide6.QtWidgets import QDialog, QVBoxLayout
 from PySide6.QtWidgets import QMessageBox
+from widgets import NoWheelComboBox
 import html  
 from html import unescape
 from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument 
@@ -404,7 +405,7 @@ class SentenciaWidget(QWidget):
         )
 
         # Tribunal  (Combo editable)
-        self.var_tribunal = QComboBox()
+        self.var_tribunal = NoWheelComboBox()
         self.var_tribunal.setEditable(True)
         lista_tribunales = [  
             "Cámara en lo Criminal y Correccional de Primera Nominación", 
@@ -446,7 +447,7 @@ class SentenciaWidget(QWidget):
             self.install_focus_highlight(self.var_tribunal.lineEdit(), lambda: self.var_tribunal.currentText())
 
         # Sala
-        self.var_sala = QComboBox()
+        self.var_sala = NoWheelComboBox()
         self.var_sala.setEditable(True)
         salas_opciones = [
             "Sala OGA 1 del MOPLO", "Sala OGA 2 del MOPLO", "Sala OGA 3 del MOPLO",
@@ -523,7 +524,7 @@ class SentenciaWidget(QWidget):
             lambda v: setattr(self.data, "n_imputados", v)
         )
         # Caso de violencia familiar / género
-        self.var_caso_vf = QComboBox()
+        self.var_caso_vf = NoWheelComboBox()
         self.var_caso_vf.addItems(
             ["No", "violencia de género", "violencia de género doméstica", "violencia familiar"]
         )
@@ -552,7 +553,7 @@ class SentenciaWidget(QWidget):
             lambda t: setattr(self.data, "victima", t.strip())
         )
 
-        self.var_victima_plural = QComboBox()
+        self.var_victima_plural = NoWheelComboBox()
         self.var_victima_plural.addItems(["Una", "Más"])
         self.var_victima_plural.setCurrentIndex(1 if self.data.victima_plural else 0)
         self.var_victima_plural.currentIndexChanged.connect(
@@ -583,7 +584,7 @@ class SentenciaWidget(QWidget):
         self.btn_alegato_defensa = QPushButton("Redactar alegato de la defensa")
 
         # Calificación legal
-        self.var_calificacion_legal = QComboBox()
+        self.var_calificacion_legal = NoWheelComboBox()
         self.var_calificacion_legal.addItems(["Correcta", "Incorrecta"])
         self.var_calificacion_legal.setCurrentText(self.data.calif_legal)
         self.var_calificacion_legal.currentTextChanged.connect(
@@ -597,7 +598,7 @@ class SentenciaWidget(QWidget):
         )
 
         # Términos potenciales
-        self.var_uso_terminos_potenciales = QComboBox()
+        self.var_uso_terminos_potenciales = NoWheelComboBox()
         self.var_uso_terminos_potenciales.addItems(["No", "Sí"])
         self.var_uso_terminos_potenciales.setCurrentIndex(
             1 if self.data.usa_potenciales else 0
@@ -607,7 +608,7 @@ class SentenciaWidget(QWidget):
         )
 
         # Decomiso
-        self.var_decomiso_option = QComboBox()
+        self.var_decomiso_option = NoWheelComboBox()
         self.var_decomiso_option.addItems(["No", "Sí"])
         self.var_decomiso_option.setCurrentIndex(1 if self.data.decomiso_si else 0)
         self.var_decomiso_option.currentIndexChanged.connect(
@@ -621,7 +622,7 @@ class SentenciaWidget(QWidget):
         )
 
         # Restricción de acercamiento
-        self.var_restriccion_option = QComboBox()
+        self.var_restriccion_option = NoWheelComboBox()
         self.var_restriccion_option.addItems(["No", "Sí"])
         self.var_restriccion_option.setCurrentIndex(1 if self.data.restriccion_si else 0)
         self.var_restriccion_option.currentIndexChanged.connect(
@@ -1721,7 +1722,7 @@ class SentenciaWidget(QWidget):
                 lambda txt, i=idx-1: self._sync_imp(i, "defensa", txt)
             )
             lbl_tipo_def = QLabel("Tipo de Defensor:")
-            cb_tipo_def = QComboBox()
+            cb_tipo_def = NoWheelComboBox()
             cb_tipo_def.addItems(["Público", "Privado"])
             layout.addWidget(lbl_tipo_def, 4, 0)
             layout.addWidget(cb_tipo_def, 4, 1)
