@@ -13,7 +13,7 @@ from PySide6.QtGui import QFont, QPainter
 from functools import partial
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit,
-    QComboBox, QSpinBox, QRadioButton, QButtonGroup, QPushButton,
+    QComboBox, QRadioButton, QButtonGroup, QPushButton,
     QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog,
     QDialogButtonBox, QSizePolicy, QToolButton
 )
@@ -24,7 +24,7 @@ from PySide6.QtCore import Qt, Signal
 from core_data import CausaData
 from PySide6.QtWidgets import QDialog, QVBoxLayout
 from PySide6.QtWidgets import QMessageBox
-from widgets import NoWheelComboBox
+from widgets import NoWheelComboBox, NoWheelSpinBox
 import html  
 from html import unescape
 from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument 
@@ -517,7 +517,7 @@ class SentenciaWidget(QWidget):
         )
 
         # N° imputados
-        self.var_num_imputados = QSpinBox()
+        self.var_num_imputados = NoWheelSpinBox()
         self.var_num_imputados.setRange(1, 10)
         self.var_num_imputados.setValue(self.data.n_imputados)
         self.var_num_imputados.valueChanged.connect(
@@ -635,7 +635,7 @@ class SentenciaWidget(QWidget):
             lambda t: setattr(self.data, "restriccion_texto", t.strip())
         )
 
-        self.var_num_hechos = QSpinBox()
+        self.var_num_hechos = NoWheelSpinBox()
         self.var_num_hechos.setRange(1, 15)
         self.var_num_hechos.setValue(len(self.data.hechos) or 1)
         self.var_num_hechos.valueChanged.connect(
