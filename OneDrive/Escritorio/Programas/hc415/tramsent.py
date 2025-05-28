@@ -2633,13 +2633,27 @@ class SentenciaWidget(QWidget):
             f'{imput_label} y {defensa_str}.'
         )
 
+        aleg_fiscal = self.var_alegato_fiscal.strip()
+        if not aleg_fiscal:
+            aleg_fiscal = "[alegato fiscal]"
+        aleg_fiscal = (
+            f"<a href=\"alegato_fiscal\" style=\"background-color:#ffffcc;\">{aleg_fiscal}</a>"
+        )
+
+        aleg_defensa = self.var_alegato_defensa.strip()
+        if not aleg_defensa:
+            aleg_defensa = "[alegato defensa]"
+        aleg_defensa = (
+            f"<a href=\"alegato_defensa\" style=\"background-color:#ffffcc;\">{aleg_defensa}</a>"
+        )
+
         plantilla += (
             f"<p align='justify'><b>3. Enumeración de la prueba:</b> "
             f"según lo dispuesto por el artículo 415 CPP y a pedido de las partes, "
             f"se incorporó la prueba recolectada durante la investigación penal preparatoria y la investigación preliminar: {self.var_prueba}</p>"
             f"<p align='justify'><b>4. Discusión final:</b> finalmente, las partes emitieron sus conclusiones de acuerdo con sus respectivos intereses. "
-            f"Así, la Fiscalía manifestó <a href=\"alegato_fiscal\">{self.var_alegato_fiscal}</a>. "
-            f"Por su parte, la defensa expuso <a href=\"alegato_defensa\">{self.var_alegato_defensa}</a>.</p>"
+            f"Así, la Fiscalía manifestó {aleg_fiscal}. "
+            f"Por su parte, la defensa expuso {aleg_defensa}.</p>"
         )
 
 # ======================================
