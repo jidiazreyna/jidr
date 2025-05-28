@@ -8,7 +8,7 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PySide6.QtCore import Qt, QEvent
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QAbstractSpinBox
 from PySide6.QtGui import QFont, QPainter
 from functools import partial
 from PySide6.QtWidgets import (
@@ -520,6 +520,7 @@ class SentenciaWidget(QWidget):
         self.var_num_imputados = NoWheelSpinBox()
         self.var_num_imputados.setRange(1, 10)
         self.var_num_imputados.setValue(self.data.n_imputados)
+        self.var_num_imputados.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.var_num_imputados.valueChanged.connect(
             lambda v: setattr(self.data, "n_imputados", v)
         )
@@ -638,6 +639,7 @@ class SentenciaWidget(QWidget):
         self.var_num_hechos = NoWheelSpinBox()
         self.var_num_hechos.setRange(1, 15)
         self.var_num_hechos.setValue(len(self.data.hechos) or 1)
+        self.var_num_hechos.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.var_num_hechos.valueChanged.connect(
             lambda v: setattr(self.data, "num_hechos", v)
         )
