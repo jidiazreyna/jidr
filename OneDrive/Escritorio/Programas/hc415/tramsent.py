@@ -800,6 +800,7 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
+        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
 
 
@@ -859,6 +860,7 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
+        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
 
     # ──────────────────────────────────────────────────────────────
@@ -912,6 +914,7 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
+        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
 
 
@@ -2637,14 +2640,14 @@ class SentenciaWidget(QWidget):
         if not aleg_fiscal:
             aleg_fiscal = "[alegato fiscal]"
         aleg_fiscal = (
-            f"<a href=\"alegato_fiscal\" style=\"background-color:#ffffcc;\">{aleg_fiscal}</a>"
+            f"<a href=\"alegato_fiscal\" style=\"background-color:#ffffcc;color:black;text-decoration:none;\">{aleg_fiscal}</a>"
         )
 
         aleg_defensa = self.var_alegato_defensa.strip()
         if not aleg_defensa:
             aleg_defensa = "[alegato defensa]"
         aleg_defensa = (
-            f"<a href=\"alegato_defensa\" style=\"background-color:#ffffcc;\">{aleg_defensa}</a>"
+            f"<a href=\"alegato_defensa\" style=\"background-color:#ffffcc;color:black;text-decoration:none;\">{aleg_defensa}</a>"
         )
 
         plantilla += (
