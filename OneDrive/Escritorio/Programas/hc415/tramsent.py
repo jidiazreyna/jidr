@@ -981,7 +981,7 @@ class SentenciaWidget(QWidget):
         • colapsa espacios consecutivos
         """
         import re, html
-        print(repr(html_raw))
+        # print(repr(html_raw))
         # A) fuera <p>, </p>, <div>, </div>
         h = re.sub(r'</?p[^>]*>',  ' ', html_raw, flags=re.I)
         h = re.sub(r'</?div[^>]*>', ' ', h,        flags=re.I)
