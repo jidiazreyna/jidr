@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QFileDialog, QAbstractSpinBox
 from PySide6.QtGui import QFont, QPainter
 from functools import partial
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit,
+    QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit, QTextBrowser,
     QComboBox, QRadioButton, QButtonGroup, QPushButton,
     QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog,
     QDialogButtonBox, QSizePolicy, QToolButton
@@ -36,7 +36,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 ###############################################################################
 # Funciones auxiliares
 ###############################################################################
-class ZoomableTextEdit(QTextEdit):
+class ZoomableTextEdit(QTextBrowser):
     zoomChanged = Signal(int)           # porcentaje (int)
 
     def __init__(self, *a, **kw):
