@@ -579,10 +579,7 @@ class SentenciaWidget(QWidget):
 
         # Alegatos (se guardan al cerrar el diálogo)
         self.var_alegato_fiscal = self.data.alegato_fiscal
-        self.btn_alegato_fiscal = QPushButton("Redactar alegato fiscal")
-
         self.var_alegato_defensa = self.data.alegato_defensa
-        self.btn_alegato_defensa = QPushButton("Redactar alegato de la defensa")
 
         # Calificación legal
         self.var_calificacion_legal = NoWheelComboBox()
@@ -1290,6 +1287,7 @@ class SentenciaWidget(QWidget):
         self.texto_plantilla.setFont(font)
         self.texto_plantilla.document().setDefaultFont(font)
         self.texto_plantilla.setReadOnly(True)
+        self.texto_plantilla.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.texto_plantilla.setAlignment(Qt.AlignJustify)
         self.texto_plantilla.setStyleSheet("font-family:'Times New Roman';")
         # Un ancho más reducido permite que toda la aplicación se ajuste a
@@ -1482,15 +1480,7 @@ class SentenciaWidget(QWidget):
         extra_layout.addWidget(self.btn_pruebas_importantes, row, 1)
         row += 1
 
-        lbl_alegfis = QLabel("Alegato fiscal:")
-        extra_layout.addWidget(lbl_alegfis, row, 0)
-        extra_layout.addWidget(self.btn_alegato_fiscal, row, 1)
-        row += 1
 
-        lbl_alegdef = QLabel("Alegato de la defensa:")
-        extra_layout.addWidget(lbl_alegdef, row, 0)
-        extra_layout.addWidget(self.btn_alegato_defensa, row, 1)
-        row += 1
 
         lbl_calif = QLabel("Calificación legal:")
         extra_layout.addWidget(lbl_calif, row, 0)
@@ -1634,8 +1624,7 @@ class SentenciaWidget(QWidget):
         self.var_victima_plural.currentTextChanged.connect(self.actualizar_plantilla)
         self.var_victima_manifestacion.textChanged.connect(self.actualizar_plantilla)
 
-        self.btn_alegato_fiscal.clicked.connect(self.abrir_ventana_alegato_fiscal)
-        self.btn_alegato_defensa.clicked.connect(self.abrir_ventana_alegato_defensa)
+        self.texto_plantilla.anchorClicked.connect(self._on_anchor_clicked)
         self.var_calificacion_legal.currentTextChanged.connect(self.actualizar_plantilla)
         self.var_calificacion_legal.currentTextChanged.connect(self.update_correccion_state)
         self.var_correccion_calif.textChanged.connect(self.actualizar_plantilla)
@@ -1656,6 +1645,13 @@ class SentenciaWidget(QWidget):
         else:
             self.var_correccion_calif.setEnabled(False)
             self.var_correccion_calif.clear()
+
+    def _on_anchor_clicked(self, url):
+        href = url.toString()
+        if href == "alegato_fiscal":
+            self.abrir_ventana_alegato_fiscal()
+        elif href == "alegato_defensa":
+            self.abrir_ventana_alegato_defensa()
 
     def add_row(self, row, label_text, widget):
         lbl = QLabel(label_text)
@@ -2638,8 +2634,12 @@ class SentenciaWidget(QWidget):
         )
 
         plantilla += (
-            f"<p align='justify'><b>3. Enumeración de la prueba:</b> según lo dispuesto por el artículo 415 CPP y a pedido de las partes, se incorporó la prueba recolectada durante la investigación penal preparatoria y la investigación preliminar: {self.var_prueba}</p>"
-            f"<p align='justify'><b>4. Discusión final:</b> finalmente, las partes emitieron sus conclusiones de acuerdo con sus respectivos intereses. Así, la Fiscalía manifestó {self.var_alegato_fiscal}. Por su parte, la defensa expuso {self.var_alegato_defensa}.</p>"
+            f"<p align='justify'><b>3. Enumeración de la prueba:</b> "
+            f"según lo dispuesto por el artículo 415 CPP y a pedido de las partes, "
+            f"se incorporó la prueba recolectada durante la investigación penal preparatoria y la investigación preliminar: {self.var_prueba}</p>"
+            f"<p align='justify'><b>4. Discusión final:</b> finalmente, las partes emitieron sus conclusiones de acuerdo con sus respectivos intereses. "
+            f"Así, la Fiscalía manifestó <a href=\"alegato_fiscal\">{self.var_alegato_fiscal}</a>. "
+            f"Por su parte, la defensa expuso <a href=\"alegato_defensa\">{self.var_alegato_defensa}</a>.</p>"
         )
 
 # ======================================

@@ -193,6 +193,8 @@ class CausaData:
         from PySide6.QtGui import QTextDocument
         doc = QTextDocument(); doc.setHtml(html_full)
         self.resuelvo = doc.toPlainText().replace("\n", " ")
+        self.alegato_fiscal  = sw.var_alegato_fiscal
+        self.alegato_defensa = sw.var_alegato_defensa
 
         old = list(self.imputados)
         self.imputados.clear()
@@ -252,6 +254,8 @@ class CausaData:
             from PySide6.QtGui import QTextDocument
             doc = QTextDocument(); doc.setHtml(html_full)
             sw.var_resuelvo.setText(doc.toPlainText().replace("\n", " "))
+        sw.var_alegato_fiscal  = self.alegato_fiscal
+        sw.var_alegato_defensa = self.alegato_defensa
 
         # ── asegurémonos de que las pestañas de imputados existen ────────
         sw.update_imputados_section()
