@@ -71,7 +71,7 @@ class CausaData:
 
         # ------------- MainWindow ↔ modelo ------------------
     def from_main(self, win: "MainWindow") -> None:
-        print("[DEBUG from_main] Modelo antes:", self.imputados)
+        # print("[DEBUG from_main] Modelo antes:", self.imputados)
         """Lee TODOS los widgets de MainWindow y actualiza este objeto."""
         # Generales
         self.caratula        = getattr(win, "entry_caratula",     None).text() if hasattr(win, "entry_caratula") else self.caratula
@@ -108,7 +108,7 @@ class CausaData:
                     )
                     for key, widget in w.items()
                 })
-        print("[DEBUG from_main] Modelo después:", self.imputados)
+        # print("[DEBUG from_main] Modelo después:", self.imputados)
 
     def apply_to_main(self, win: "MainWindow") -> None:
         """Carga los widgets de MainWindow con los valores guardados."""
@@ -174,7 +174,7 @@ class CausaData:
     # ------------- SentenciaWidget ↔ modelo ----------------
 # ------------- SentenciaWidget ↔ modelo ----------------
     def from_sentencia(self, sw: "SentenciaWidget") -> None:
-        print("[DEBUG from_sentencia] Modelo antes:", self.imputados)
+        # print("[DEBUG from_sentencia] Modelo antes:", self.imputados)
         # ── datos generales ────────────────────────────────────────────────
         
         self.localidad       = sw.var_localidad.text().strip()
@@ -221,10 +221,10 @@ class CausaData:
             else:
                 base = nuevos
 
-            print(f"[from_sentencia] imputado #{idx+1} fused →", base)
+            # print(f"[from_sentencia] imputado #{idx+1} fused →", base)
             self.imputados.append(base)
 
-        print("[DEBUG from_sentencia] Modelo después:", self.imputados)
+        # print("[DEBUG from_sentencia] Modelo después:", self.imputados)
 
 
     # (si también necesitás los ‘hechos’, añadí un bucle similar sobre sw.hechos)
