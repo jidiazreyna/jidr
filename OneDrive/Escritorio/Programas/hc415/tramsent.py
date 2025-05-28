@@ -1605,7 +1605,11 @@ class SentenciaWidget(QWidget):
         )
         if ruta:
             document.save(ruta)
-            print("Documento guardado en:", ruta)
+            QMessageBox.information(
+                self,
+                "Guardado",
+                f"Documento guardado en:\n{ruta}",
+            )
 
     def setup_connections(self):
         # Conexiones
