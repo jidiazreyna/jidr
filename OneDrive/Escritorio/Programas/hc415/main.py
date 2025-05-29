@@ -1444,8 +1444,14 @@ class MainWindow(QMainWindow):
         imp = self._imp() or {}
 
         def _txt(w):
-            if isinstance(w, QLineEdit):  return w.text()
-            if isinstance(w, QComboBox):  return w.currentText()
+            if isinstance(w, QLineEdit):
+                html = w.property("html")
+                if html:
+                    doc = QTextDocument(); doc.setHtml(html)
+                    return doc.toPlainText()
+                return w.text()
+            if isinstance(w, QComboBox):
+                return w.currentText()
             return ""
         raw_html = (
             self.entry_resuelvo.property("html")
@@ -1464,6 +1470,7 @@ class MainWindow(QMainWindow):
             'firmantes'    : self.entry_firmantes.text(),
             'penado'       : _txt(imp.get('nombre')),
             'dni'          : _txt(imp.get('dni')),
+            'estable'      : _txt(imp.get('estable')),
 
             'decreto_computo' : _txt(imp.get('decreto')),  # ← alias para plantillas viejas
             # —— Delitos / hechos ——

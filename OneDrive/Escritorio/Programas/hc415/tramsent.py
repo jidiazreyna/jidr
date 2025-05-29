@@ -237,6 +237,8 @@ def _sanitize_html(html_raw: str) -> str:
 
     # d) quitamos cualquier <span> remanente
     html_raw = re.sub(r'</?span[^>]*>', '', html_raw, flags=re.I)
+    # eliminar enlaces <a name="..."> que aparecen al pegar desde Word
+    html_raw = re.sub(r'</?a[^>]*>', '', html_raw, flags=re.I)
 
     # d-bis) fuera <br>
     html_raw = re.sub(r'(?i)<br\s*/?>', ' ', html_raw)
