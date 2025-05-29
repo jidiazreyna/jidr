@@ -4,7 +4,9 @@ from typing import List, Dict, Any
 
 from PySide6.QtCore import QSignalBlocker
 import json, dataclasses, pathlib
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import (
+    QFileDialog, QMessageBox, QLineEdit, QComboBox, QCheckBox
+)
 from pathlib import Path
 
 from typing import TYPE_CHECKING
@@ -102,9 +104,9 @@ class CausaData:
             for w in win.imputados_widgets:
                 self.imputados.append({
                     key: (
-                        widget.text()        if widget.__class__.__name__ == "QLineEdit" else
-                        widget.currentText() if widget.__class__.__name__ == "QComboBox" else
-                        widget.isChecked()   if widget.__class__.__name__ == "QCheckBox" else None
+                        widget.text()        if isinstance(widget, QLineEdit) else
+                        widget.currentText() if isinstance(widget, QComboBox) else
+                        widget.isChecked()   if isinstance(widget, QCheckBox) else None
                     )
                     for key, widget in w.items()
                 })
@@ -158,11 +160,11 @@ class CausaData:
             for k, widget in w.items():
                 if k not in dato:
                     continue
-                if widget.__class__.__name__ == "QLineEdit":
+                if isinstance(widget, QLineEdit):
                     widget.setText(dato[k])
-                elif widget.__class__.__name__ == "QComboBox":
+                elif isinstance(widget, QComboBox):
                     widget.setCurrentText(dato[k])
-                elif widget.__class__.__name__ == "QCheckBox":
+                elif isinstance(widget, QCheckBox):
                     widget.setChecked(bool(dato[k]))
 
         win._refresh_imp_names_in_selector()
