@@ -304,6 +304,13 @@ def format_list_with_semicolons(items):
         return f"{items[0]}; y {items[1]}"
     return "; ".join(items[:-1]) + f"; y {items[-1]}"
 
+def strip_trailing_single_dot(text: str) -> str:
+    """Remove a single trailing period without touching ellipses."""
+    t = text.rstrip()
+    if t.endswith('.') and not t.endswith('..') and not t.endswith('...') and not t.endswith('…'):
+        return t[:-1]
+    return t
+
 def numero_romano(n: int) -> str:
     romanos = [
         "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
@@ -1998,7 +2005,7 @@ class SentenciaWidget(QWidget):
         if juez_cargo == "vocal":
             juez_intro = "del vocal" if self.rb_juez_m.isChecked() else "de la vocal"
 
-        texto_juez = f"{juez_intro} {juez_nombre}"
+        texto_juez = strip_trailing_single_dot(f"{juez_intro} {juez_nombre}")
 
         # 7) Fiscal
         fiscal_nombre = self.var_fiscal.text().strip()
@@ -2068,7 +2075,9 @@ class SentenciaWidget(QWidget):
         # Al final, unimos con conjunción
 
         defensores_unicos = list(def_dict.keys())  # no repetidos
-        defensa_final = format_list_for_sentence(defensores_unicos)
+        defensa_final = strip_trailing_single_dot(
+            format_list_for_sentence(defensores_unicos)
+        )
 
         # 12) “{fue/ron} {acusado/a/as/os}”:
         #   => “fue” si 1, “fueron” si >1
@@ -2085,7 +2094,9 @@ class SentenciaWidget(QWidget):
             if d:
                 comb += f", {d}"
             datos_personales_list.append(comb)
-        datos_personales_str = format_list_with_semicolons(datos_personales_list)
+        datos_personales_str = strip_trailing_single_dot(
+            format_list_with_semicolons(datos_personales_list)
+        )
         art_tribunal = "el" if self.boton_cargo_juez.text().lower() == "juez" else "la"
         primer_parrafo = (
             f"En la ciudad de {localidad}, el {fecha_letras}, se dan a conocer "
@@ -2337,7 +2348,9 @@ class SentenciaWidget(QWidget):
         )
 
         if n_imp == 1:
-            condena_unica = self.imputados[0]["condena"].text().strip()
+            condena_unica = strip_trailing_single_dot(
+                self.imputados[0]["condena"].text().strip()
+            )
             plantilla += f"determinó la de {condena_unica}.</p>"
         else:
             frag_penas = []
@@ -2346,11 +2359,17 @@ class SentenciaWidget(QWidget):
                 if not nombre_tmp:
                     nombre_tmp = f"Imputado#{i+1}"
                 frag_penas.append(f"para {nombre_tmp}, la de {self.imputados[i]['condena'].text().strip()}")
-            acuerdo_str = format_list_with_semicolons(frag_penas)
+            acuerdo_str = strip_trailing_single_dot(
+                format_list_with_semicolons(frag_penas)
+            )
             plantilla += f"determinó {acuerdo_str}.</p>"
 
-        sujeto_str = self.var_sujeto_eventual.text().strip()
-        mani_str = self.var_manifestacion.text().strip()
+        sujeto_str = strip_trailing_single_dot(
+            self.var_sujeto_eventual.text().strip()
+        )
+        mani_str = strip_trailing_single_dot(
+            self.var_manifestacion.text().strip()
+        )
         if sujeto_str or mani_str:
             plantilla += (
                 f"<p align='justify'>Se le concedió la palabra a {sujeto_str} "
@@ -2378,8 +2397,12 @@ class SentenciaWidget(QWidget):
             f"<p align='justify'>Las características de esta modalidad de juzgamiento y del acuerdo mencionado fueron explicados por el tribunal {acus_label}, y se verificó así que {verb_comp} su contenido y sus consecuencias, que {verb_con} su derecho a exigir un juicio oral, y que su conformidad era libre y voluntaria.</p>"
         )
 
-        victim = self.var_victima.text().strip() if self.var_victima.text().strip() else "la víctima"
-        manifest_victim = self.var_victima_manifestacion.text().strip()
+        victim = strip_trailing_single_dot(
+            self.var_victima.text().strip() if self.var_victima.text().strip() else "la víctima"
+        )
+        manifest_victim = strip_trailing_single_dot(
+            self.var_victima_manifestacion.text().strip()
+        )
         victim_plural_mode = (self.var_victima_plural.currentText().strip().lower() == "más")
         if manifest_victim:
             if victim_plural_mode:
@@ -2430,10 +2453,12 @@ class SentenciaWidget(QWidget):
 
         for i, imp in enumerate(self.imputados):
             name_i = f"<b>{final_names_list[i]}</b>"
-            condiciones = (
-                imp["condiciones"].property("html")
-                or imp["condiciones"].text()
-            ).strip()
+            condiciones = strip_trailing_single_dot(
+                (
+                    imp["condiciones"].property("html")
+                    or imp["condiciones"].text()
+                ).strip()
+            )
             verb = verbs[i % len(verbs)]
 
             if i == 0:
@@ -2525,7 +2550,9 @@ class SentenciaWidget(QWidget):
                     f"de impedir el trámite del art. 415 CPP."
                 )
             
-            conf_text = self.imputados[0]["confesion"].text().strip()
+            conf_text = strip_trailing_single_dot(
+                self.imputados[0]["confesion"].text().strip()
+            )
             if conf_text:
                 plantilla += f" Ante ello, {nm} dijo: “{conf_text}”.</p>"
             else:
@@ -2551,7 +2578,9 @@ class SentenciaWidget(QWidget):
             verbs_cycle = ["expresó", "manifestó", "refirió", "declaró", "afirmó"]
             for i, imp in enumerate(self.imputados):
                 nm = final_names_list[i]
-                conf_text = imp["confesion"].text().strip()
+                conf_text = strip_trailing_single_dot(
+                    imp["confesion"].text().strip()
+                )
                 prefix = prefixes_cycle[i % len(prefixes_cycle)]
                 verb = verbs_cycle[i % len(verbs_cycle)]
                 if conf_text:
@@ -2664,7 +2693,9 @@ class SentenciaWidget(QWidget):
         # Obtener la lista de defensores únicos
         defensores_unicos = list(def_dict.keys())
         # También ya calculas 'defensa_final' para otra parte:
-        defensa_final = format_list_for_sentence(defensores_unicos)
+        defensa_final = strip_trailing_single_dot(
+            format_list_for_sentence(defensores_unicos)
+        )
 
         # Ahora, para el placeholder {su/s defensa/s}:
         if not defensores_unicos:
@@ -2750,6 +2781,7 @@ class SentenciaWidget(QWidget):
             # CASO A: Solo uno habló y ninguno guardó silencio
             if total_speakers == 1 and not non_speakers_2:
                 idx_speaker, text_speaker = speakers_2[0]
+                text_speaker = strip_trailing_single_dot(text_speaker)
                 nm = nombre(idx_speaker)
                 plantilla += (
                     f"<p align='justify'>Finalmente, al concederse la última palabra, "
@@ -2760,6 +2792,7 @@ class SentenciaWidget(QWidget):
             else:
                 # Imprimimos ordenadamente a cada uno de los que sí hablaron
                 for i, (idx_speaker, text_speaker) in enumerate(speakers_2):
+                    text_speaker = strip_trailing_single_dot(text_speaker)
                     nm = nombre(idx_speaker)
                     if i == 0:
                         # Primer orador
@@ -2906,13 +2939,18 @@ class SentenciaWidget(QWidget):
 
         salvedad = ""
         if self.var_calificacion_legal.currentText() == "Incorrecta":
-            corr = self.var_correccion_calif.text().strip()
+            corr = strip_trailing_single_dot(
+                self.var_correccion_calif.text().strip()
+            )
             if corr:
                 salvedad = f", con la salvedad de que {corr}"
 
         plantilla += f"<p align='justify'><b>A LA SEGUNDA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
         calif_es_correcta = (self.var_calificacion_legal.currentText() == "Correcta")
-        corr = self.var_correccion_calif.text().strip() if self.var_calificacion_legal.currentText() == "Incorrecta" else ""
+        corr = strip_trailing_single_dot(
+            self.var_correccion_calif.text().strip()
+            if self.var_calificacion_legal.currentText() == "Incorrecta" else ""
+        )
 
         calif_list = []
         for delito, imput_names in delitos_dict.items():
