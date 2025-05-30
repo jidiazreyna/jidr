@@ -1932,7 +1932,10 @@ class SentenciaWidget(QWidget):
         n_imp = self.var_num_imputados.value()
         n_hec = self.var_num_hechos.value()
         ...
-        for i in range(n_hec):
+        # Puede ocurrir que la lista de hechos aún no tenga la cantidad
+        # indicada en el spinbox; nos limitamos a los que existan para evitar
+        # errores de índice.
+        for i in range(min(n_hec, len(self.hechos))):
             desc_str = (
                 self.hechos[i]["descripcion"].property("html")
                 or self.hechos[i]["descripcion"].text()
@@ -2181,7 +2184,7 @@ class SentenciaWidget(QWidget):
 )
 
         # Listado de hechos
-        for i in range(n_hec):
+        for i in range(min(n_hec, len(self.hechos))):
             desc_str = (
                 self.hechos[i]["descripcion"].property("html")
                 or self.hechos[i]["descripcion"].text()
