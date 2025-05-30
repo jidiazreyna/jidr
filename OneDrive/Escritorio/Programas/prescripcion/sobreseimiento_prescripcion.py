@@ -120,7 +120,7 @@ class SafeDict(UserDict):
 
 TEMPLATE = """
 <p align='justify'>Córdoba, {fecha_letras}.</p>
-<p align='justify'>VISTA: la presente causa caratulada {caratula}, venida a {este_esta} {tribunal} a los efectos de resolver la situación procesal de {nombre_apellido}, {datos_personales}</p>
+<p align='justify'>VISTA: la presente causa caratulada {caratula}, venida a {este_esta} {tribunal} a los efectos de resolver la situación procesal de {nombre_apellido}</p>
 <p align='justify'>DE LA QUE RESULTA: Que {imputado_articulo} {nombre_apellido} se {le_les} atribuye {hechos_label}:</p>
 {hechos_html}
 <p align='justify'><b>Y CONSIDERANDO:</b></p>
@@ -160,16 +160,28 @@ def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hecho
 
 # ───────────────────────────────────────────────────────────── Widgets ──
 class ImputadoWidget(QWidget):
-    def __init__(self, idx:int):
-        super().__init__(); self.idx=idx
+    def __init__(self, idx: int):
+        super().__init__(); self.idx = idx
         lay = QHBoxLayout(self)
-        self.edit_nombre = QLineEdit(); self.edit_nombre.setPlaceholderText(f"Nombre imputado #{idx+1}")
-        self.rb_m = QRadioButton("M"); self.rb_f = QRadioButton("F"); self.rb_m.setChecked(True)
-        grp=QButtonGroup(self); grp.addButton(self.rb_m); grp.addButton(self.rb_f)
-        for w in (self.edit_nombre,self.rb_m,self.rb_f): lay.addWidget(w)
+        self.edit_nombre = QLineEdit();
+        self.edit_nombre.setPlaceholderText(f"Nombre imputado #{idx+1}")
+        self.edit_datos = QLineEdit();
+        self.edit_datos.setPlaceholderText(f"Datos personales #{idx+1}")
+        self.rb_m = QRadioButton("M"); self.rb_f = QRadioButton("F");
+        self.rb_m.setChecked(True)
+        grp = QButtonGroup(self); grp.addButton(self.rb_m); grp.addButton(self.rb_f)
+        for w in (self.edit_nombre, self.edit_datos, self.rb_m, self.rb_f):
+            lay.addWidget(w)
         lay.addStretch()
-    def nombre(self)->str: return self.edit_nombre.text().strip() or f"Imputado#{self.idx+1}"
-    def sexo(self)->str: return "M" if self.rb_m.isChecked() else "F"
+
+    def nombre(self) -> str:
+        return self.edit_nombre.text().strip() or f"Imputado#{self.idx+1}"
+
+    def datos(self) -> str:
+        return self.edit_datos.text().strip()
+
+    def sexo(self) -> str:
+        return "M" if self.rb_m.isChecked() else "F"
 
 class HechoWidget(QWidget):
     def __init__(self, idx:int):
@@ -223,8 +235,13 @@ class PrescripcionGUI(QWidget):
     def refresh_imputados(self):
         target=self.spin_imp.value()
         while len(self.imputados_widgets)<target:
-            w=ImputadoWidget(len(self.imputados_widgets)); self.imputados_widgets.append(w); self.box_imputados.addWidget(w)
-            w.edit_nombre.textChanged.connect(self.update_preview); w.rb_m.toggled.connect(self.update_preview); w.rb_f.toggled.connect(self.update_preview)
+            w = ImputadoWidget(len(self.imputados_widgets))
+            self.imputados_widgets.append(w)
+            self.box_imputados.addWidget(w)
+            w.edit_nombre.textChanged.connect(self.update_preview)
+            w.edit_datos.textChanged.connect(self.update_preview)
+            w.rb_m.toggled.connect(self.update_preview)
+            w.rb_f.toggled.connect(self.update_preview)
         while len(self.imputados_widgets)>target:
             w=self.imputados_widgets.pop(); w.setParent(None)
         self.update_preview()
@@ -240,20 +257,24 @@ class PrescripcionGUI(QWidget):
     def update_preview(self):
         sexos = [w.sexo() for w in self.imputados_widgets]
         nombres = [w.nombre() for w in self.imputados_widgets]
+        datos = [w.datos() for w in self.imputados_widgets]
+        nombres_datos = [
+            f"{n}, {d}" if d else n
+            for n, d in zip(nombres, datos)
+        ]
         hechos = [w.texto() for w in self.hechos_widgets]
-        campos={
-            "fecha_letras":obtener_fecha_en_letras(),
+        campos = {
+            "fecha_letras": obtener_fecha_en_letras(),
             "caratula": self.ed_caratula.text().strip() or "[carátula]",
-            "este_esta": "este" if self.cb_tipo.currentText()=="Juzgado" else "esta",
+            "este_esta": "este" if self.cb_tipo.currentText() == "Juzgado" else "esta",
             "tribunal": self.ed_tribunal.text().strip() or "[tribunal]",
-            "nombre_apellido": ", ".join(nombres),
-            "datos_personales": "[datos]",
+            "nombre_apellido": ", ".join(nombres_datos) or "[imputados]",
             "prueba": self.ed_prueba.text().strip() or "[prueba]",
             "fiscal": self.ed_fiscal.text().strip() or "[fiscal]",
         }
         html = render_prescripcion(
             sexos_imputados=sexos,
-            nombres=nombres,
+            nombres=nombres_datos,
             hechos=hechos,
             **campos,
         )
