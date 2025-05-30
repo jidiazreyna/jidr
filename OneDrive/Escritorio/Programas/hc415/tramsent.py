@@ -1536,64 +1536,75 @@ class SentenciaWidget(QWidget):
         self.data.apply_to_sentencia(self)
 
     def generar_docx_con_html(self):
-        """Genera un archivo DOCX respetando <p>, <b>, <i>... (parser básico)"""
+        """Genera un DOCX respetando <p>, <b> e <i> usando un parser ligero."""
+        from html import unescape
+        from html.parser import HTMLParser
         from docx import Document
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         from docx.shared import Pt
         from PySide6.QtWidgets import QFileDialog
-        import re
-        import html
 
-        # 1) Recogemos y sanitizamos el HTML
+        # 1) HTML ya limpio desde el QTextEdit
         raw_html = _sanitize_html(self.texto_plantilla.toHtml())
 
-        # 2) Comenzamos un nuevo document
+        class Parser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.paragraphs = []
+                self._current = []
+                self._in_p = False
+
+            def handle_starttag(self, tag, attrs):
+                t = tag.lower()
+                if t == "p":
+                    self._in_p = True
+                    self._current = []
+                elif t in ("b", "i") and self._in_p:
+                    self._current.append((t, True))
+
+            def handle_endtag(self, tag):
+                t = tag.lower()
+                if t == "p" and self._in_p:
+                    self.paragraphs.append(self._current)
+                    self._current = []
+                    self._in_p = False
+                elif t in ("b", "i") and self._in_p:
+                    self._current.append((t, False))
+
+            def handle_data(self, data):
+                if self._in_p and data:
+                    self._current.append(("text", data))
+
+        parser = Parser()
+        parser.feed(raw_html)
+
+        paragraphs = parser.paragraphs or [[("text", raw_html)]]
+
         document = Document()
+        document._body.clear_content()  # eliminamos párrafo inicial vacío
 
-        # 3) Encontramos los párrafos <p>...</p>
-        paragraph_regex = re.compile(r'(?is)<p.*?>(.*?)</p>')
-        paragraphs = paragraph_regex.findall(raw_html)
-        if not paragraphs:
-            paragraphs = [raw_html]
-
-        for par_html in paragraphs:
-            p = document.add_paragraph("")
+        for tokens in paragraphs:
+            p = document.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-            # 4) Separamos tokens con <b>, </b>, <i>, </i>
-            tokens = re.split(r'(<b>|</b>|<i>|</i>)', par_html)
-
-            bold_active = False
-            italic_active = False
-
-            for token in tokens:
-                # En vez de .strip(), usamos .rstrip() para solo eliminar
-
-                t = html.unescape(token.replace('\n', ' '))  # Reemplaza saltos de línea por espacio
-                if not t:
+            bold = False
+            italic = False
+            for typ, val in tokens:
+                if typ == "b":
+                    bold = val
                     continue
-
-                # Detectar etiquetas
-                lt = t.lower()
-                if lt == '<b>':
-                    bold_active = True
+                if typ == "i":
+                    italic = val
                     continue
-                elif lt == '</b>':
-                    bold_active = False
-                    continue
-                elif lt == '<i>':
-                    italic_active = True
-                    continue
-                elif lt == '</i>':
-                    italic_active = False
-                    continue
-
-                # Texto normal
-                run = p.add_run(t)
-                run.font.name = "Times New Roman"
-                run.font.size = Pt(12)
-                run.bold = bold_active
-                run.italic = italic_active
+                if typ == "text":
+                    text = unescape(val.replace("\n", " "))
+                    if not text:
+                        continue
+                    run = p.add_run(text)
+                    run.font.name = "Times New Roman"
+                    run.font.size = Pt(12)
+                    run.bold = bold
+                    run.italic = italic
 
         ruta, _ = QFileDialog.getSaveFileName(
             self, "Guardar DOCX", "", "Documentos de Word (*.docx)"
