@@ -1551,7 +1551,21 @@ class SentenciaWidget(QWidget):
 
         # Pasamos por _sanitize_html para quitar spans/estilos extra
         raw_html = _sanitize_html(basic_html)
-
+                # ───── PARCHE: asegurar apertura de <p> ─────
+        if not re.match(r'\s*<p\b', raw_html, flags=re.I):
+            # Busco el primer cierre </p>.  Si existe, corto ahí.
+            m = re.search(r'</p>', raw_html, flags=re.I)
+            if m:
+                head = raw_html[:m.start()]          # texto hasta </p>
+                tail = raw_html[m.start():]          # desde </p> inclusive
+                raw_html = f'<p align="justify">{head}</p>{tail}'
+            else:
+                # No hay ningún </p>: lo encierro todo
+                raw_html = f'<p align="justify">{raw_html}</p>'
+        # ─── DEBUG 1 ───
+        print("=== RAW_HTML (primeros 400) ===")
+        print(raw_html[:400])
+        print("================================")
         class Parser(HTMLParser):
             def __init__(self):
                 super().__init__()
@@ -1562,6 +1576,8 @@ class SentenciaWidget(QWidget):
             def handle_starttag(self, tag, attrs):
                 t = tag.lower()
                 if t == "p":
+                    if self._in_p:
+                        self.paragraphs.append(self._current)   # guarda el que estaba
                     self._in_p = True
                     self._current = []
                 elif t in ("b", "i") and self._in_p:
@@ -1582,7 +1598,12 @@ class SentenciaWidget(QWidget):
 
         parser = Parser()
         parser.feed(raw_html)
-
+        # ─── DEBUG 2 ───
+        print("Cantidad de párrafos:", len(parser.paragraphs))
+        for i, par in enumerate(parser.paragraphs[:3]):   # miramos los primeros 3
+            print(f"Párrafo {i}:",
+                "".join(t[1] if t[0] == "text" else f"<{t[0]}…>"
+                        for t in par))
         paragraphs = parser.paragraphs or [[("text", raw_html)]]
 
         document = Document()
