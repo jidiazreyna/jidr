@@ -304,37 +304,41 @@ def format_list_with_semicolons(items):
         return f"{items[0]}; y {items[1]}"
     return "; ".join(items[:-1]) + f"; y {items[-1]}"
 
-def strip_trailing_single_dot(text: str) -> str:
-    """Return *text* without unneeded dots at the end.
-
-    Elimina automáticamente la secuencia ``..`` que puede aparecer cuando el
-    usuario escribe un punto final y la plantilla ya preveía otro.
-    Conserva los puntos suspensivos ``...`` o el carácter ``…``.
+def strip_trailing_single_dot(text: str | None) -> str:
     """
+    Elimina puntos redundantes sin romper las elipsis.
 
-    t = text.rstrip()
+    • Convierte cada “..” aislado (no precedido ni seguido por otro punto)
+      en un único “.”, aun cuando los dos puntos estén separados sólo por
+      etiquetas de cierre HTML (</a>, </b>…), espacios o saltos de línea.
+    • Si aún quedasen dos o más puntos al final, los reduce a:
+        – “…”   → se mantiene (puntos suspensivos)
+        – “.”   → un solo punto
+    """
+    if not text:
+        return ""
 
-    if t.endswith("…"):
-        # Respeta el carácter de puntos suspensivos
-        return t
+    # ── 1)  “..” directos → “.”  (como antes)
+    text = re.sub(r'(?<!\.)\.\.(?!\.)', '.', text)
 
-    # Detectar cuántos puntos hay al final
-    m = re.search(r"\.*$", t)
-    dots = m.group(0) if m else ""
+    # ── 2)  “.</tag>.”   ó   “.</tag></b> .”  → sólo un punto
+    #        (punto  + etiquetas de cierre/espacios  + punto)
+    text = re.sub(
+        r'(?<!\.)'                    # el char anterior NO es punto
+        r'\.'                         # un punto
+        r'(?:\s*</[^>]+>\s*)+'        # ≥1 etiquetas de cierre con posible white-space
+        r'\.'                         # otro punto
+        r'(?!\.)',                    # el siguiente char NO es punto
+        lambda m: m.group(0)[:-1],    # suprime el último punto
+        text
+    )
 
-    if not dots:
-        return t
+    # ── 3)  Normalizar la cola (“…..” → “…” | “..” → “.”)
+    tail = re.search(r'\.*$', text).group(0)      # todos los puntos del final
+    if tail and tail not in ('...', '…'):
+        text = text[:-len(tail)] + '.'
 
-    if dots == "...":
-        # Justo puntos suspensivos
-        return t
-
-    if len(dots) > 3:
-        # Teníamos "..." + punto(s) adicional(es): quitamos sólo uno
-        return t[:-1]
-
-    # Casos "." o ".." => eliminamos un punto
-    return t[:-1]
+    return text
 
 def numero_romano(n: int) -> str:
     romanos = [
@@ -3201,6 +3205,7 @@ class SentenciaWidget(QWidget):
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
         old_plain = self._prev_plain
+        plantilla = strip_trailing_single_dot(plantilla)
         self.texto_plantilla.setHtml(plantilla)
         self.texto_plantilla.setAlignment(Qt.AlignJustify)
 
