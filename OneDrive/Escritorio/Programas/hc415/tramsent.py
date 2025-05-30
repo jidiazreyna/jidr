@@ -1919,7 +1919,14 @@ class SentenciaWidget(QWidget):
             return
         
         n_imp = self.var_num_imputados.value()
-        n_hec = min(self.var_num_hechos.value(), len(self.hechos))
+        n_hec = self.var_num_hechos.value()
+        ...
+        for i in range(n_hec):
+            desc_str = (
+                self.hechos[i]["descripcion"].property("html")
+                or self.hechos[i]["descripcion"].text()
+            ).strip()
+
 
         # 1) Localidad
         localidad = self.var_localidad.text().strip()
