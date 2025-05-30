@@ -1544,8 +1544,13 @@ class SentenciaWidget(QWidget):
         from docx.shared import Pt
         from PySide6.QtWidgets import QFileDialog
 
-        # 1) HTML ya limpio desde el QTextEdit
-        raw_html = _sanitize_html(self.texto_plantilla.toHtml())
+        # 1) HTML en el mismo formato que usa "Copiar sentencia"
+        basic_html = self.texto_plantilla.toHtml()
+        basic_html = re.sub(r"font-size\s*:[^;\"]+;?", "", basic_html, flags=re.I)
+        basic_html = re.sub(r"<p\b", '<p align="justify"', basic_html, flags=re.I)
+
+        # Pasamos por _sanitize_html para quitar spans/estilos extra
+        raw_html = _sanitize_html(basic_html)
 
         class Parser(HTMLParser):
             def __init__(self):
