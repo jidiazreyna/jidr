@@ -12,37 +12,53 @@ from PySide6.QtWidgets import QFileDialog, QAbstractSpinBox
 from PySide6.QtGui import QFont, QPainter
 from functools import partial
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit, QTextBrowser,
-    QComboBox, QRadioButton, QButtonGroup, QPushButton,
-    QGridLayout, QVBoxLayout, QHBoxLayout, QScrollArea, QDialog,
-    QDialogButtonBox, QSizePolicy, QToolButton
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QLineEdit,
+    QTextEdit,
+    QTextBrowser,
+    QComboBox,
+    QRadioButton,
+    QButtonGroup,
+    QPushButton,
+    QGridLayout,
+    QVBoxLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QDialog,
+    QDialogButtonBox,
+    QSizePolicy,
+    QToolButton,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
 import ctypes
-from PySide6.QtCore import Qt, Signal 
+from PySide6.QtCore import Qt, Signal
 from core_data import CausaData
 from PySide6.QtWidgets import QDialog, QVBoxLayout
 from PySide6.QtWidgets import QMessageBox
 from widgets import NoWheelComboBox, NoWheelSpinBox
-import html  
+import html
 from html import unescape
-from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument 
+from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument
 
 
-myappid = 'com.miempresa.miproducto.1.0'  # Identificador único
+myappid = "com.miempresa.miproducto.1.0"  # Identificador único
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
 
 ###############################################################################
 # Funciones auxiliares
 ###############################################################################
 class ZoomableTextEdit(QTextBrowser):
-    zoomChanged = Signal(int)           # porcentaje (int)
+    zoomChanged = Signal(int)  # porcentaje (int)
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self._steps = 0                 # cantidad de “clics” de zoom
-        self._factor_per_step = 1.10    # 10 % por paso
+        self._steps = 0  # cantidad de “clics” de zoom
+        self._factor_per_step = 1.10  # 10 % por paso
         self.setLineWrapMode(QTextEdit.WidgetWidth)
 
     def wheelEvent(self, ev):
@@ -61,41 +77,78 @@ class ZoomableTextEdit(QTextBrowser):
                 self.zoomOut(1)
 
             # nuevo porcentaje
-            pct = round((self._factor_per_step ** self._steps) * 100)
+            pct = round((self._factor_per_step**self._steps) * 100)
             self.zoomChanged.emit(pct)
             ev.accept()
         else:
             super().wheelEvent(ev)
 
+
 def get_resource_path(relative_path):
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         base_path = sys._MEIPASS
     else:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+
 UNIDADES = (
-    'cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco',
-    'seis', 'siete', 'ocho', 'nueve', 'diez', 'once',
-    'doce', 'trece', 'catorce', 'quince', 'dieciséis',
-    'diecisiete', 'dieciocho', 'diecinueve', 'veinte',
-    'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro',
-    'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho',
-    'veintinueve'
+    "cero",
+    "uno",
+    "dos",
+    "tres",
+    "cuatro",
+    "cinco",
+    "seis",
+    "siete",
+    "ocho",
+    "nueve",
+    "diez",
+    "once",
+    "doce",
+    "trece",
+    "catorce",
+    "quince",
+    "dieciséis",
+    "diecisiete",
+    "dieciocho",
+    "diecinueve",
+    "veinte",
+    "veintiuno",
+    "veintidós",
+    "veintitrés",
+    "veinticuatro",
+    "veinticinco",
+    "veintiséis",
+    "veintisiete",
+    "veintiocho",
+    "veintinueve",
 )
 DECENAS = (
-    'treinta', 'cuarenta', 'cincuenta', 'sesenta',
-    'setenta', 'ochenta', 'noventa'
+    "treinta",
+    "cuarenta",
+    "cincuenta",
+    "sesenta",
+    "setenta",
+    "ochenta",
+    "noventa",
 )
 CENTENAS = (
-    'cien', 'doscientos', 'trescientos', 'cuatrocientos',
-    'quinientos', 'seiscientos', 'setecientos', 'ochocientos',
-    'novecientos'
+    "cien",
+    "doscientos",
+    "trescientos",
+    "cuatrocientos",
+    "quinientos",
+    "seiscientos",
+    "setecientos",
+    "ochocientos",
+    "novecientos",
 )
 
-    #  helpers internos de RTF – pégalos encima de copy_to_clipboard
-_rx_tag      = re.compile(r'<(/?)(b|strong|i|em|u|p)(?:\s+[^>]*)?>', re.I)
-_rx_p_align  = re.compile(r'text-align\s*:\s*(left|right|center|justify)', re.I)
+#  helpers internos de RTF – pégalos encima de copy_to_clipboard
+_rx_tag = re.compile(r"<(/?)(b|strong|i|em|u|p)(?:\s+[^>]*)?>", re.I)
+_rx_p_align = re.compile(r"text-align\s*:\s*(left|right|center|justify)", re.I)
+
 
 def _html_to_rtf_fragment(html: str) -> str:
     """
@@ -103,49 +156,58 @@ def _html_to_rtf_fragment(html: str) -> str:
     a la secuencia RTF equivalente.
     """
     rtf = []
-    stack = []              # para llevar el estado <b>, <i>, <u>
+    stack = []  # para llevar el estado <b>, <i>, <u>
 
     pos = 0
     for m in _rx_tag.finditer(html):
-        text = html[pos:m.start()]
-            # --- texto normal (escapar) --------------------------------------
-        text = (text.replace('\\', r'\\')
-                    .replace('{',  r'\{')
-                    .replace('}',  r'\}')
-                    .replace('&nbsp;', ' '))
+        text = html[pos : m.start()]
+        # --- texto normal (escapar) --------------------------------------
+        text = (
+            text.replace("\\", r"\\")
+            .replace("{", r"\{")
+            .replace("}", r"\}")
+            .replace("&nbsp;", " ")
+        )
         rtf.append(text)
         pos = m.end()
         closing, tag = m.group(1), m.group(2).lower()
-        if tag == 'p':                                     # <p …>
-            if closing:                    # </p>
-                rtf.append(r'\par ')
-            else:                          # <p …>
+        if tag == "p":  # <p …>
+            if closing:  # </p>
+                rtf.append(r"\par ")
+            else:  # <p …>
                 style = m.group(0)
-                alg   = 'justify'          # por defecto
+                alg = "justify"  # por defecto
                 ma = _rx_p_align.search(style)
                 if ma:
                     alg = ma.group(1).lower()
-                rtf.append(r'\pard')
-                rtf.append({'left': r'\ql ',
-                            'right': r'\qr ',
-                            'center': r'\qc ',
-                            'justify': r'\qj '}[alg])
-        elif tag in ('b', 'strong'):
-            rtf.append(r'\b0 ' if closing else r'\b ')
-        elif tag in ('i', 'em'):
-            rtf.append(r'\i0 ' if closing else r'\i ')
-        elif tag == 'u':
-            rtf.append(r'\ulnone ' if closing else r'\ul ')
+                rtf.append(r"\pard")
+                rtf.append(
+                    {
+                        "left": r"\ql ",
+                        "right": r"\qr ",
+                        "center": r"\qc ",
+                        "justify": r"\qj ",
+                    }[alg]
+                )
+        elif tag in ("b", "strong"):
+            rtf.append(r"\b0 " if closing else r"\b ")
+        elif tag in ("i", "em"):
+            rtf.append(r"\i0 " if closing else r"\i ")
+        elif tag == "u":
+            rtf.append(r"\ulnone " if closing else r"\ul ")
 
         # resto del texto tras la última etiqueta
     tail = html[pos:]
-    tail = (tail.replace('\\', r'\\')
-                .replace('{',  r'\{')
-                .replace('}',  r'\}')
-                .replace('&nbsp;', ' '))
+    tail = (
+        tail.replace("\\", r"\\")
+        .replace("{", r"\{")
+        .replace("}", r"\}")
+        .replace("&nbsp;", " ")
+    )
     rtf.append(tail)
 
-    return ''.join(rtf)
+    return "".join(rtf)
+
 
 def numero_a_letras(num: int) -> str:
     if num < 0:
@@ -162,13 +224,18 @@ def numero_a_letras(num: int) -> str:
         resto = num % 100
         if num == 100:
             return "cien"
-        return CENTENAS[cent] if resto == 0 else f"{CENTENAS[cent]} {numero_a_letras(resto)}"
+        return (
+            CENTENAS[cent]
+            if resto == 0
+            else f"{CENTENAS[cent]} {numero_a_letras(resto)}"
+        )
     if num < 10000:
         mil = num // 1000
         resto = num % 1000
         prefix = "mil" if mil == 1 else f"{numero_a_letras(mil)} mil"
         return prefix if resto == 0 else f"{prefix} {numero_a_letras(resto)}"
     return str(num)
+
 
 def _sanitize_html_italic_only(html_raw: str) -> str:
     """
@@ -178,33 +245,40 @@ def _sanitize_html_italic_only(html_raw: str) -> str:
     import re, html
 
     # Nos quedamos sólo con el <body> (igual que antes)
-    m = re.search(r'<body[^>]*>(.*?)</body>', html_raw, flags=re.I | re.S)
-    if m: html_raw = m.group(1)
+    m = re.search(r"<body[^>]*>(.*?)</body>", html_raw, flags=re.I | re.S)
+    if m:
+        html_raw = m.group(1)
 
     # 1) fuera <b>, </b>, <strong>, </strong>, <u>, </u>, y spans con font-weight
-    html_raw = re.sub(r'</?(b|strong|u)[^>]*>', '', html_raw, flags=re.I)
+    html_raw = re.sub(r"</?(b|strong|u)[^>]*>", "", html_raw, flags=re.I)
     html_raw = re.sub(
         r'<span[^>]*style="[^"]*font-weight\s*:\s*(?:bold|700)[^"]*"[^>]*>',
-        '',
+        "",
         html_raw,
-        flags=re.I
+        flags=re.I,
     )
-    html_raw = re.sub(r'</span>', '', html_raw, flags=re.I)
+    html_raw = re.sub(r"</span>", "", html_raw, flags=re.I)
 
     # 2) Nos quedamos *solo* con <i>/<em> –los demás tags fuera–
     #    (primero <em>→<i> para unificar)
-    html_raw = re.sub(r'</?em>', lambda m:'<i>' if m.group(0)[1]!='/' else '</i>', html_raw, flags=re.I)
-    html_raw = re.sub(r'</?(?!i\b)[a-z][^>]*>', '', html_raw)  # quita todo salvo <i>
+    html_raw = re.sub(
+        r"</?em>",
+        lambda m: "<i>" if m.group(0)[1] != "/" else "</i>",
+        html_raw,
+        flags=re.I,
+    )
+    html_raw = re.sub(r"</?(?!i\b)[a-z][^>]*>", "", html_raw)  # quita todo salvo <i>
 
     # 3) compactamos espacios/entidades raras
-    html_raw = re.sub(r'(\r\n|\r|\n|&nbsp;|\u2028|\u2029)', ' ', html_raw)
-    html_raw = re.sub(r'\s+', ' ', html_raw).strip()
+    html_raw = re.sub(r"(\r\n|\r|\n|&nbsp;|\u2028|\u2029)", " ", html_raw)
+    html_raw = re.sub(r"\s+", " ", html_raw).strip()
 
     # 4) Si NO quedó ningún <i>…</i>, lo rodeamos completo
-    if '<i>' not in html_raw.lower():
+    if "<i>" not in html_raw.lower():
         html_raw = f"<i>{html.escape(html_raw)}</i>"
 
     return html_raw
+
 
 def _sanitize_html(html_raw: str) -> str:
     """
@@ -214,58 +288,65 @@ def _sanitize_html(html_raw: str) -> str:
     import re, html
 
     # A)  ───── EXTRAEMOS SOLO <body> … </body> ─────
-    m = re.search(r'<body[^>]*>(.*?)</body>', html_raw, flags=re.I | re.S)
+    m = re.search(r"<body[^>]*>(.*?)</body>", html_raw, flags=re.I | re.S)
     if m:
         html_raw = m.group(1)
     # (si por algún motivo no hay <body>, seguimos con lo que venga)
 
     # B)  ───── A partir de aquí van los pasos que ya tenías ─────
     # a) <strong>/<em> → <b>/<i>
-    html_raw = re.sub(r'</?strong>', lambda m: '<b>' if m.group(0)[1] != '/' else '</b>', html_raw, flags=re.I)
-    html_raw = re.sub(r'</?em>',     lambda m: '<i>' if m.group(0)[1] != '/' else '</i>', html_raw, flags=re.I)
+    html_raw = re.sub(
+        r"</?strong>",
+        lambda m: "<b>" if m.group(0)[1] != "/" else "</b>",
+        html_raw,
+        flags=re.I,
+    )
+    html_raw = re.sub(
+        r"</?em>",
+        lambda m: "<i>" if m.group(0)[1] != "/" else "</i>",
+        html_raw,
+        flags=re.I,
+    )
 
     # b) <span style="font-weight:...">…</span> → <b>…</b>
     html_raw = re.sub(
         r'<span[^>]*style="[^"]*font-weight\s*:\s*(?:bold|700)[^"]*"[^>]*>(.*?)</span>',
-        r'<b>\1</b>',
+        r"<b>\1</b>",
         html_raw,
-        flags=re.I | re.S
+        flags=re.I | re.S,
     )
 
     # c) quitamos atributos style, class, dir, lang…
-    html_raw = re.sub(r'\s*(style|class|dir|lang)="[^"]*"', '', html_raw, flags=re.I)
+    html_raw = re.sub(r'\s*(style|class|dir|lang)="[^"]*"', "", html_raw, flags=re.I)
 
     # d) quitamos cualquier <span> remanente
-    html_raw = re.sub(r'</?span[^>]*>', '', html_raw, flags=re.I)
+    html_raw = re.sub(r"</?span[^>]*>", "", html_raw, flags=re.I)
     # eliminar enlaces <a name="..."> que aparecen al pegar desde Word
-    html_raw = re.sub(r'</?a[^>]*>', '', html_raw, flags=re.I)
+    html_raw = re.sub(r"</?a[^>]*>", "", html_raw, flags=re.I)
 
     # d-bis) fuera <br>
-    html_raw = re.sub(r'(?i)<br\s*/?>', ' ', html_raw)
+    html_raw = re.sub(r"(?i)<br\s*/?>", " ", html_raw)
 
     # d-ter) fuera párrafos vacíos de Qt
     html_raw = re.sub(
-        r'<p[^>]*-qt-paragraph-type:empty[^>]*>\s*(<br\s*/?>)?\s*</p>',
-        ' ',
+        r"<p[^>]*-qt-paragraph-type:empty[^>]*>\s*(<br\s*/?>)?\s*</p>",
+        " ",
         html_raw,
-        flags=re.I
+        flags=re.I,
     )
 
     # e) limpia saltos y nbsp
-    html_raw = re.sub(
-        r'(\r\n|\r|\n|&#10;|&#13;|\u2028|\u2029|&nbsp;)',
-        ' ',
-        html_raw
-    )
+    html_raw = re.sub(r"(\r\n|\r|\n|&#10;|&#13;|\u2028|\u2029|&nbsp;)", " ", html_raw)
 
     # f) compacta espacios
-    html_raw = re.sub(r'\s+', ' ', html_raw).strip()
+    html_raw = re.sub(r"\s+", " ", html_raw).strip()
 
     # g) si el texto completo está envuelto en un único <p>…</p>, lo quitamos
-    if re.fullmatch(r'<p[^>]*>.*?</p>', html_raw, flags=re.I | re.S):
-        html_raw = re.sub(r'^<p[^>]*>|</p>$', '', html_raw, flags=re.I).strip()
+    if re.fullmatch(r"<p[^>]*>.*?</p>", html_raw, flags=re.I | re.S):
+        html_raw = re.sub(r"^<p[^>]*>|</p>$", "", html_raw, flags=re.I).strip()
 
     return html.unescape(html_raw)
+
 
 def obtener_fecha_en_letras():
     fecha_actual = datetime.now()
@@ -275,12 +356,22 @@ def obtener_fecha_en_letras():
     dia_letras = numero_a_letras(dia)
     anio_letras = numero_a_letras(anio)
     meses = {
-        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
-        5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
-        9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre",
     }
-    mes_str = meses.get(mes_numero, '')
+    mes_str = meses.get(mes_numero, "")
     return f"{dia_letras} de {mes_str} de {anio_letras}"
+
 
 def format_list_for_sentence(items):
     """Separa con comas y añade ' y ' antes del último elemento."""
@@ -293,6 +384,7 @@ def format_list_for_sentence(items):
         return f"{items[0]} y {items[1]}"
     return f"{', '.join(items[:-1])} y {items[-1]}"
 
+
 def format_list_with_semicolons(items):
     """Separa con ';' y añade '; y ' antes del último elemento."""
     items = [i.strip() for i in items if i.strip()]
@@ -303,6 +395,7 @@ def format_list_with_semicolons(items):
     if len(items) == 2:
         return f"{items[0]}; y {items[1]}"
     return "; ".join(items[:-1]) + f"; y {items[-1]}"
+
 
 def strip_trailing_single_dot(text: str | None) -> str:
     """
@@ -319,33 +412,53 @@ def strip_trailing_single_dot(text: str | None) -> str:
         return ""
 
     # ── 1)  “..” directos → “.”  (como antes)
-    text = re.sub(r'(?<!\.)\.\.(?!\.)', '.', text)
+    text = re.sub(r"(?<!\.)\.\.(?!\.)", ".", text)
 
     # ── 2)  “.</tag>.”   ó   “.</tag></b> .”  → sólo un punto
     #        (punto  + etiquetas de cierre/espacios  + punto)
     text = re.sub(
-        r'(?<!\.)'                    # el char anterior NO es punto
-        r'\.'                         # un punto
-        r'(?:\s*</[^>]+>\s*)+'        # ≥1 etiquetas de cierre con posible white-space
-        r'\.'                         # otro punto
-        r'(?!\.)',                    # el siguiente char NO es punto
-        lambda m: m.group(0)[:-1],    # suprime el último punto
-        text
+        r"(?<!\.)"  # el char anterior NO es punto
+        r"\."  # un punto
+        r"(?:\s*</[^>]+>\s*)+"  # ≥1 etiquetas de cierre con posible white-space
+        r"\."  # otro punto
+        r"(?!\.)",  # el siguiente char NO es punto
+        lambda m: m.group(0)[:-1],  # suprime el último punto
+        text,
     )
 
     # ── 3)  Normalizar la cola (“…..” → “…” | “..” → “.”)
-    tail = re.search(r'\.*$', text).group(0)      # todos los puntos del final
-    if tail and tail not in ('...', '…'):
-        text = text[:-len(tail)] + '.'
+    tail = re.search(r"\.*$", text).group(0)  # todos los puntos del final
+    if tail and tail not in ("...", "…"):
+        text = text[: -len(tail)] + "."
 
     return text
 
+
 def numero_romano(n: int) -> str:
     romanos = [
-        "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-        "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
     ]
-    return romanos[n-1] if 1 <= n <= len(romanos) else str(n)
+    return romanos[n - 1] if 1 <= n <= len(romanos) else str(n)
+
 
 ORDINALES_HECHOS = [
     "Primer",
@@ -362,7 +475,7 @@ ORDINALES_HECHOS = [
     "Duodécimo",
     "Decimotercero",
     "Decimocuarto",
-    "Decimoquinto"
+    "Decimoquinto",
 ]
 
 
@@ -445,32 +558,32 @@ class SentenciaWidget(QWidget):
         # Tribunal  (Combo editable)
         self.var_tribunal = NoWheelComboBox()
         self.var_tribunal.setEditable(True)
-        lista_tribunales = [  
-            "Cámara en lo Criminal y Correccional de Primera Nominación", 
-            "Cámara en lo Criminal y Correccional de Segunda Nominación", 
-            "Cámara en lo Criminal y Correccional de Tercera Nominación", 
-            "Cámara en lo Criminal y Correccional de Cuarta Nominación", 
-            "Cámara en lo Criminal y Correccional de Quinta Nominación", 
-            "Cámara en lo Criminal y Correccional de Sexta Nominación", 
-            "Cámara en lo Criminal y Correccional de Séptima Nominación", 
-            "Cámara en lo Criminal y Correccional de Octava Nominación", 
-            "Cámara en lo Criminal y Correccional de Novena Nominación", 
-            "Cámara en lo Criminal y Correccional de Décima Nominación", 
-            "Cámara en lo Criminal y Correccional de Onceava Nominación", 
-            "Cámara en lo Criminal y Correccional de Doceava Nominación", 
-            "Juzgado de Control en lo Penal Económico", 
-            "Juzgado de Control y Faltas N° 2", 
-            "Juzgado de Control y Faltas N° 3", 
-            "Juzgado de Control y Faltas N° 4", 
-            "Juzgado de Control y Faltas N° 5", 
-            "Juzgado de Control en Violencia de Género y Familiar N° 1", 
-            "Juzgado de Control en Violencia de Género y Familiar N° 2", 
-            "Juzgado de Control y Faltas N° 7", 
-            "Juzgado de Control y Faltas N° 8", 
-            "Juzgado de Control y Faltas N° 9", 
+        lista_tribunales = [
+            "Cámara en lo Criminal y Correccional de Primera Nominación",
+            "Cámara en lo Criminal y Correccional de Segunda Nominación",
+            "Cámara en lo Criminal y Correccional de Tercera Nominación",
+            "Cámara en lo Criminal y Correccional de Cuarta Nominación",
+            "Cámara en lo Criminal y Correccional de Quinta Nominación",
+            "Cámara en lo Criminal y Correccional de Sexta Nominación",
+            "Cámara en lo Criminal y Correccional de Séptima Nominación",
+            "Cámara en lo Criminal y Correccional de Octava Nominación",
+            "Cámara en lo Criminal y Correccional de Novena Nominación",
+            "Cámara en lo Criminal y Correccional de Décima Nominación",
+            "Cámara en lo Criminal y Correccional de Onceava Nominación",
+            "Cámara en lo Criminal y Correccional de Doceava Nominación",
+            "Juzgado de Control en lo Penal Económico",
+            "Juzgado de Control y Faltas N° 2",
+            "Juzgado de Control y Faltas N° 3",
+            "Juzgado de Control y Faltas N° 4",
+            "Juzgado de Control y Faltas N° 5",
+            "Juzgado de Control en Violencia de Género y Familiar N° 1",
+            "Juzgado de Control en Violencia de Género y Familiar N° 2",
+            "Juzgado de Control y Faltas N° 7",
+            "Juzgado de Control y Faltas N° 8",
+            "Juzgado de Control y Faltas N° 9",
             "Juzgado de Control y Faltas N° 10",
-            "Juzgado de Control y Faltas N° 11", 
-            "Juzgado de Control de Lucha contra el Narcotráfico"
+            "Juzgado de Control y Faltas N° 11",
+            "Juzgado de Control de Lucha contra el Narcotráfico",
         ]
         self.var_tribunal.addItems(lista_tribunales)
         if self.data.tribunal and self.data.tribunal not in lista_tribunales:
@@ -480,19 +593,29 @@ class SentenciaWidget(QWidget):
             lambda t: setattr(self.data, "tribunal", t.strip())
         )
         self.var_tribunal.currentTextChanged.connect(self.actualizar_plantilla)
-        self.install_focus_highlight(self.var_tribunal, lambda: self.var_tribunal.currentText())
+        self.install_focus_highlight(
+            self.var_tribunal, lambda: self.var_tribunal.currentText()
+        )
         if self.var_tribunal.lineEdit():
-            self.install_focus_highlight(self.var_tribunal.lineEdit(), lambda: self.var_tribunal.currentText())
+            self.install_focus_highlight(
+                self.var_tribunal.lineEdit(), lambda: self.var_tribunal.currentText()
+            )
 
         # Sala
         self.var_sala = NoWheelComboBox()
         self.var_sala.setEditable(True)
         salas_opciones = [
-            "Sala OGA 1 del MOPLO", "Sala OGA 2 del MOPLO", "Sala OGA 3 del MOPLO",
-            "Sala OGA 4 del MOPLO", "Sala OGA 5 del MOPLO", "Sala OGA 6 del MOPLO",
-            "Sala OGA 7 del MOPLO", "Sala OGA 8 del MOPLO", "Sala OGA 9 del MOPLO",
+            "Sala OGA 1 del MOPLO",
+            "Sala OGA 2 del MOPLO",
+            "Sala OGA 3 del MOPLO",
+            "Sala OGA 4 del MOPLO",
+            "Sala OGA 5 del MOPLO",
+            "Sala OGA 6 del MOPLO",
+            "Sala OGA 7 del MOPLO",
+            "Sala OGA 8 del MOPLO",
+            "Sala OGA 9 del MOPLO",
             "Sala OGA 10 del MOPLO",
-            "Sala de audiencias de la Cámara en lo Criminal y Correccional"
+            "Sala de audiencias de la Cámara en lo Criminal y Correccional",
         ]
         self.var_sala.addItems(salas_opciones)
         if self.data.sala and self.data.sala not in salas_opciones:
@@ -503,7 +626,9 @@ class SentenciaWidget(QWidget):
         )
         self.install_focus_highlight(self.var_sala, lambda: self.var_sala.currentText())
         if self.var_sala.lineEdit():
-            self.install_focus_highlight(self.var_sala.lineEdit(), lambda: self.var_sala.currentText())
+            self.install_focus_highlight(
+                self.var_sala.lineEdit(), lambda: self.var_sala.currentText()
+            )
 
         # ───────────────────────────────────────────────
         # 2) INTERVINIENTES
@@ -565,7 +690,12 @@ class SentenciaWidget(QWidget):
         # Caso de violencia familiar / género
         self.var_caso_vf = NoWheelComboBox()
         self.var_caso_vf.addItems(
-            ["No", "violencia de género", "violencia de género doméstica", "violencia familiar"]
+            [
+                "No",
+                "violencia de género",
+                "violencia de género doméstica",
+                "violencia familiar",
+            ]
         )
 
         self.var_caso_vf.currentTextChanged.connect(
@@ -605,15 +735,8 @@ class SentenciaWidget(QWidget):
             lambda t: setattr(self.data, "manifestacion_victima", t.strip())
         )
         # en __init__, junto al resto de los var_…
-        self.var_prueba = ""                       # aquí guardaremos el HTML plano  
-        self.var_pruebas_importantes = ""          # idem
-
-        
-        self.btn_prueba = QPushButton("Redactar pruebas")
-        self.btn_prueba.clicked.connect(self.abrir_ventana_prueba)
-
-        self.btn_pruebas_importantes = QPushButton("Redactar pruebas relevantes")
-        self.btn_pruebas_importantes.clicked.connect(self.abrir_ventana_pruebas_importantes)
+        self.var_prueba = ""  # aquí guardaremos el HTML plano
+        self.var_pruebas_importantes = ""  # idem
 
         # Alegatos (se guardan al cerrar el diálogo)
         self.var_alegato_fiscal = self.data.alegato_fiscal
@@ -660,7 +783,9 @@ class SentenciaWidget(QWidget):
         # Restricción de acercamiento
         self.var_restriccion_option = NoWheelComboBox()
         self.var_restriccion_option.addItems(["No", "Sí"])
-        self.var_restriccion_option.setCurrentIndex(1 if self.data.restriccion_si else 0)
+        self.var_restriccion_option.setCurrentIndex(
+            1 if self.data.restriccion_si else 0
+        )
         self.var_restriccion_option.currentIndexChanged.connect(
             lambda i: setattr(self.data, "restriccion_si", i == 1)
         )
@@ -670,6 +795,8 @@ class SentenciaWidget(QWidget):
         self.var_restriccion_text.textChanged.connect(
             lambda t: setattr(self.data, "restriccion_texto", t.strip())
         )
+        self.var_resuelvo = QLineEdit()
+        self.var_resuelvo.setVisible(False)
 
         self.var_num_hechos = NoWheelSpinBox()
         self.var_num_hechos.setRange(1, 15)
@@ -685,15 +812,15 @@ class SentenciaWidget(QWidget):
         self.setup_ui()
         self.setup_connections()
 
-        self.data.apply_to_sentencia(self)     # carga modelo
-        self.update_imputados_section()        # crea pestañas imputados
-        self.update_hechos_section()           # crea pestañas hechos
-        self.actualizar_plantilla()            # ya existen ambas listas
+        self.data.apply_to_sentencia(self)  # carga modelo
+        self.update_imputados_section()  # crea pestañas imputados
+        self.update_hechos_section()  # crea pestañas hechos
+        self.actualizar_plantilla()  # ya existen ambas listas
 
     def _update_zoom_label(self, percent: int):
         self.lbl_zoom.setText(f"ZOOM {percent}%")
-        self.lbl_zoom.setVisible(True)           # ¡mostrar!
-        self._hide_zoom_timer.start(1000)        # se ocultará en 1 s
+        self.lbl_zoom.setVisible(True)  # ¡mostrar!
+        self._hide_zoom_timer.start(1000)  # se ocultará en 1 s
 
     def _highlight_diff(self, old_text: str, new_text: str) -> None:
         """Resalta en amarillo los fragmentos modificados."""
@@ -712,7 +839,7 @@ class SentenciaWidget(QWidget):
 
         matcher = SequenceMatcher(None, old_text, new_text)
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'equal' or j1 == j2:
+            if tag == "equal" or j1 == j2:
                 continue
             cursor.setPosition(j1)
             cursor.setPosition(j2, QTextCursor.KeepAnchor)
@@ -777,23 +904,23 @@ class SentenciaWidget(QWidget):
     def _toggle_bold(self, editor: QTextEdit):
         cursor = editor.textCursor()
         if not cursor.hasSelection():
-            return                                # nada seleccionado
+            return  # nada seleccionado
         fmt = QTextCharFormat()
         bold_now = cursor.charFormat().fontWeight() > QFont.Normal
         fmt.setFontWeight(QFont.Normal if bold_now else QFont.Bold)
         cursor.mergeCharFormat(fmt)
-
 
     @staticmethod
     def html_a_plano(html: str, mantener_saltos: bool = True) -> str:
         if not html:
             return ""
 
-        doc = QTextDocument(); doc.setHtml(html)
+        doc = QTextDocument()
+        doc.setHtml(html)
         texto = doc.toPlainText()
 
         # → equivale a &nbsp; y &nbsp; finos (202F)
-        texto = texto.replace("\u00A0", " ").replace("\u202F", " ")
+        texto = texto.replace("\u00a0", " ").replace("\u202f", " ")
 
         if not mantener_saltos:
             texto = texto.replace("\n", " ")
@@ -813,14 +940,17 @@ class SentenciaWidget(QWidget):
                 text = ""
             self._highlight_section_text(text)
         return super().eventFilter(obj, event)
-    
+
     def _rich_text_dialog_italic_only(self, title: str, initial_html: str, on_accept):
-        dlg = QDialog(self); dlg.setWindowTitle(title); dlg.resize(650, 420)
+        dlg = QDialog(self)
+        dlg.setWindowTitle(title)
+        dlg.resize(650, 420)
         lay = QVBoxLayout(dlg)
         editor = QTextEdit()
         editor.setAcceptRichText(True)
         base_font = QFont("Times New Roman", 12)
-        editor.setFont(base_font); editor.document().setDefaultFont(base_font)
+        editor.setFont(base_font)
+        editor.document().setDefaultFont(base_font)
         editor.setHtml(initial_html or "")
         lay.addWidget(editor)
 
@@ -833,14 +963,13 @@ class SentenciaWidget(QWidget):
             raw = editor.toHtml()
             clean = _sanitize_html_italic_only(raw)
             on_accept(clean)
-            clean = html.unescape(clean)   
+            clean = html.unescape(clean)
             dlg.accept()
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
         dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
-
 
     def _rich_text_dialog(self, title: str, initial_html: str, on_accept_callback):
         """
@@ -855,16 +984,16 @@ class SentenciaWidget(QWidget):
         dlg.setWindowTitle(title)
         dlg.resize(650, 420)
 
-        lay_top   = QVBoxLayout(dlg)
-        toolbar   = QHBoxLayout()
-        editor    = QTextEdit()
+        lay_top = QVBoxLayout(dlg)
+        toolbar = QHBoxLayout()
+        editor = QTextEdit()
 
         # --- apariencia del editor -----------------------------------
         base_font = QFont("Times New Roman", 12)
         editor.setFont(base_font)
         editor.document().setDefaultFont(base_font)
         editor.setAcceptRichText(True)
-        editor.setHtml(initial_html or "")          # muestra lo que ya tenías
+        editor.setHtml(initial_html or "")  # muestra lo que ya tenías
 
         # --- botón “B” (negrita) --------------------------------------
         btn_bold = QPushButton("B")
@@ -877,21 +1006,25 @@ class SentenciaWidget(QWidget):
         lay_top.addLayout(toolbar)
 
         # --- atajo Ctrl+B ---------------------------------------------
-        editor.addAction(QAction(self, shortcut="Ctrl+B",
-                                triggered=lambda: self._toggle_bold(editor)))
+        editor.addAction(
+            QAction(
+                self, shortcut="Ctrl+B", triggered=lambda: self._toggle_bold(editor)
+            )
+        )
 
         lay_top.addWidget(editor)
 
         # --- OK / Cancel ----------------------------------------------
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                                parent=dlg)
+        btn_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=dlg
+        )
         lay_top.addWidget(btn_box)
 
         # Cuando aprietan OK…
         def _on_ok():
             raw_html = editor.toHtml()
-            clean    = _sanitize_html(raw_html)
-            clean = html.unescape(clean)   
+            clean = _sanitize_html(raw_html)
+            clean = html.unescape(clean)
             # devolvemos HTML *limpio* al método que llamó
             on_accept_callback(clean)
             dlg.accept()
@@ -912,8 +1045,8 @@ class SentenciaWidget(QWidget):
             lambda html_limpio: (
                 qle.setProperty("html", html_limpio),
                 qle.setText(QTextDocument(html_limpio).toPlainText()[:200]),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
 
     def _rich_text_dialog_no_bold(self, title: str, initial_html: str, on_accept):
@@ -921,12 +1054,15 @@ class SentenciaWidget(QWidget):
         from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
         import html, re
 
-        dlg = QDialog(self); dlg.setWindowTitle(title); dlg.resize(650, 420)
+        dlg = QDialog(self)
+        dlg.setWindowTitle(title)
+        dlg.resize(650, 420)
         lay = QVBoxLayout(dlg)
 
         editor = QTextEdit()
         base_font = QFont("Times New Roman", 12)
-        editor.setFont(base_font); editor.document().setDefaultFont(base_font)
+        editor.setFont(base_font)
+        editor.document().setDefaultFont(base_font)
         editor.setAcceptRichText(True)
         editor.setHtml(initial_html or "")
         lay.addWidget(editor)
@@ -937,16 +1073,19 @@ class SentenciaWidget(QWidget):
         # ── helper local: quita toda negrita ──────────────────────────────
         def _remove_bold(raw_html: str) -> str:
             # 1) elimina <b>/<strong>
-            raw_html = re.sub(r'</?(b|strong)[^>]*>', '', raw_html, flags=re.I)
+            raw_html = re.sub(r"</?(b|strong)[^>]*>", "", raw_html, flags=re.I)
             # 2) elimina spans con font-weight:bold/700
             raw_html = re.sub(
                 r'<span[^>]*style="[^"]*font-weight\s*:\s*(?:bold|700)[^"]*"[^>]*>(.*?)</span>',
-                r'\1', flags=re.I | re.S, string=raw_html)
+                r"\1",
+                flags=re.I | re.S,
+                string=raw_html,
+            )
             return html.unescape(raw_html).strip()
 
         def _on_ok():
-            clean_html = _sanitize_html(editor.toHtml())          # tu sanitizador normal
-            clean_html = _remove_bold(clean_html)                 # …pero sin negrita
+            clean_html = _sanitize_html(editor.toHtml())  # tu sanitizador normal
+            clean_html = _remove_bold(clean_html)  # …pero sin negrita
             on_accept(clean_html)
             dlg.accept()
 
@@ -955,7 +1094,6 @@ class SentenciaWidget(QWidget):
         dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
 
-
     # ──────────────────────────────────────────────────────────────
     def copiar_sentencia(self, te: QTextEdit) -> None:
         """
@@ -963,9 +1101,9 @@ class SentenciaWidget(QWidget):
         Word elegirá el HTML (con negritas/alineaciones), pero el RTF
         queda por si lo necesita otro programa.
         """
-        from PySide6.QtCore    import QMimeData
+        from PySide6.QtCore import QMimeData
         from PySide6.QtWidgets import QApplication
-        from PySide6.QtGui     import QClipboard
+        from PySide6.QtGui import QClipboard
 
         # ---------- 1) texto sin formato --------------------------------------
         plain_text = te.toPlainText().strip()
@@ -974,9 +1112,9 @@ class SentenciaWidget(QWidget):
         # ---------- 2) HTML limpio + CSS Times 12, alineado a la izquierda -----------------
         basic_html = te.toHtml()
         # quitamos tamaños en línea para aplicar el nuestro
-        basic_html = re.sub(r'font-size\s*:[^;"]+;?', '', basic_html, flags=re.I)
+        basic_html = re.sub(r'font-size\s*:[^;"]+;?', "", basic_html, flags=re.I)
         # forzamos que cada párrafo venga con align="left"
-        basic_html = re.sub(r'<p\b', '<p align="justify"', basic_html, flags=re.I)
+        basic_html = re.sub(r"<p\b", '<p align="justify"', basic_html, flags=re.I)
 
         html_full = (
             "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
@@ -985,23 +1123,22 @@ class SentenciaWidget(QWidget):
             "font-size:12pt;line-height:1.0;margin:0;"
             "text-align:justify;}"
             "</style></head><body><!--StartFragment-->"
-            + basic_html +
-            "<!--EndFragment--></body></html>"
+            + basic_html
+            + "<!--EndFragment--></body></html>"
         )
 
         # ---------- 3) RTF (Times 12, alineación + b/i/u) ----------------------
         rtf_paragraphs = []
-        for para_html in re.findall(r'<p[^>]*>.*?</p>', basic_html, flags=re.S|re.I):
+        for para_html in re.findall(r"<p[^>]*>.*?</p>", basic_html, flags=re.S | re.I):
             rtf_paragraphs.append(_html_to_rtf_fragment(para_html))
 
         rtf_content = (
             r"{\rtf1\ansi\deff0"
             r"{\fonttbl{\f0 Times New Roman;}}"
-                        r"\fs24 " + ''.join(rtf_paragraphs) + "}"
+            r"\fs24 " + "".join(rtf_paragraphs) + "}"
         )
         # sustituimos cualquier \qj (justificado) por \ql (alineado a la izquierda)
-        rtf_content = rtf_content.replace(r'\ql ', r'\qj ')
-        
+        rtf_content = rtf_content.replace(r"\ql ", r"\qj ")
 
         # ---------- 4) al portapapeles (HTML lo dejamos el último) ------------
         mime = QMimeData()
@@ -1019,30 +1156,31 @@ class SentenciaWidget(QWidget):
         • colapsa espacios consecutivos
         """
         import re, html
+
         # print(repr(html_raw))
         # A) fuera <p>, </p>, <div>, </div>
-        h = re.sub(r'</?p[^>]*>',  ' ', html_raw, flags=re.I)
-        h = re.sub(r'</?div[^>]*>', ' ', h,        flags=re.I)
+        h = re.sub(r"</?p[^>]*>", " ", html_raw, flags=re.I)
+        h = re.sub(r"</?div[^>]*>", " ", h, flags=re.I)
 
         # B) fuera <br> y variantes
-        h = re.sub(r'(?i)<br\s*/?>', ' ', h)
+        h = re.sub(r"(?i)<br\s*/?>", " ", h)
 
         # C) fuera saltos ocultos y nbsp
-        h = re.sub(r'(\r\n|\r|\n|&#10;|&#13;|\u2028|\u2029|&nbsp;)', ' ', h)
+        h = re.sub(r"(\r\n|\r|\n|&#10;|&#13;|\u2028|\u2029|&nbsp;)", " ", h)
 
         # D) compactar espacios
-        h = re.sub(r'\s+', ' ', h).strip()
+        h = re.sub(r"\s+", " ", h).strip()
 
         return html.unescape(h)
-    
+
     def abrir_ventana_alegato_fiscal(self):
         self._rich_text_dialog(
             "Escribir alegato fiscal",
             self.var_alegato_fiscal,
             lambda h: (
                 setattr(self, "var_alegato_fiscal", self._flatten_inline(h)),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
 
     def _guardar_alegato_fiscal(self, texto, dlg):
@@ -1056,38 +1194,38 @@ class SentenciaWidget(QWidget):
             self.var_alegato_defensa,
             lambda h: (
                 setattr(self, "var_alegato_defensa", self._flatten_inline(h)),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
 
     def _guardar_alegato_defensa(self, texto, dlg):
         self.var_alegato_defensa = texto.strip()
         dlg.accept()
         self.actualizar_plantilla()
-    
+
     def abrir_ventana_prueba(self):
         self._rich_text_dialog(
             "Agregar prueba",
             self.var_prueba,
             lambda h: (
-                setattr(self, "var_prueba", self._flatten_inline(h)),     
-                self.actualizar_plantilla()
-            )
+                setattr(self, "var_prueba", self._flatten_inline(h)),
+                self.actualizar_plantilla(),
+            ),
         )
 
     def _guardar_prueba(self, texto, dlg):
         self.var_prueba = texto.strip()
         dlg.accept()
         self.actualizar_plantilla()
-    
+
     def abrir_ventana_pruebas_importantes(self):
         self._rich_text_dialog(
             "Agregar pruebas relevantes",
             self.var_pruebas_importantes,
             lambda h: (
                 setattr(self, "var_pruebas_importantes", self._flatten_inline(h)),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
 
     def guardar_pruebas_importantes(self, texto, dlg):
@@ -1102,8 +1240,6 @@ class SentenciaWidget(QWidget):
         qlineedit.setText(QTextDocument(h).toPlainText()[:200])
         self.actualizar_plantilla()
 
-
-    
     def abrir_ventana_descripcion(self, idx):
         """Abre el editor rich-text para la descripción del hecho #idx."""
         qle = self.hechos[idx]["descripcion"]
@@ -1113,23 +1249,22 @@ class SentenciaWidget(QWidget):
             html_inicial,
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
-
 
     def abrir_ventana_datos(self, idx):
         """Edita datos personales (#idx) usando el diálogo sin negrita."""
         qle = self.imputados[idx]["datos"]
         html_inicial = qle.property("html") or qle.text()
 
-        self._rich_text_dialog_no_bold(                        # ← uso del nuevo diálogo
+        self._rich_text_dialog_no_bold(  # ← uso del nuevo diálogo
             f"Editar datos personales – imputado #{idx+1}",
             html_inicial,
             lambda h: (
-                self._guardar_html_lineedit(qle, h),           # ⟵ se guarda igual que antes
-                self.actualizar_plantilla()
-            )
+                self._guardar_html_lineedit(qle, h),  # ⟵ se guarda igual que antes
+                self.actualizar_plantilla(),
+            ),
         )
 
     def abrir_ventana_condiciones(self, idx):
@@ -1141,10 +1276,10 @@ class SentenciaWidget(QWidget):
             html_inicial,
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
-    
+
     def abrir_ventana_pautas(self, idx):
         """Abre el editor rich-text para datos personales agregados del imputado #idx."""
         qle = self.imputados[idx]["pautas"]
@@ -1154,10 +1289,9 @@ class SentenciaWidget(QWidget):
             html_inicial,
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
-                self.actualizar_plantilla()
-            )
+                self.actualizar_plantilla(),
+            ),
         )
-
 
     def abrir_ventana_antecedentes(self, idx):
         """Editor rico para antecedentes penales del imputado #idx."""
@@ -1169,7 +1303,7 @@ class SentenciaWidget(QWidget):
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
                 self.actualizar_plantilla(),
-            )
+            ),
         )
 
     def abrir_ventana_confesion(self, idx):
@@ -1182,7 +1316,7 @@ class SentenciaWidget(QWidget):
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
                 self.actualizar_plantilla(),
-            )
+            ),
         )
 
     def abrir_ventana_ultima_palabra(self, idx):
@@ -1195,21 +1329,24 @@ class SentenciaWidget(QWidget):
             lambda h: (
                 self._guardar_html_lineedit(qle, h),
                 self.actualizar_plantilla(),
-            )
+            ),
         )
+
     def abrir_ventana_decomiso(self):
         self._rich_text_dialog(
             "Editar texto de Decomiso",
             self.var_decomiso_text.property("html") or self.TEXTO_DECOMISO_DEFECTO,
-            self._guardar_decomiso
+            self._guardar_decomiso,
         )
 
     def abrir_ventana_restriccion(self):
         self._rich_text_dialog(
             "Editar texto de Restricción de contacto",
-            self.var_restriccion_text.property("html") or self.TEXTO_RESTRICCION_DEFECTO,
-            self._guardar_restriccion
+            self.var_restriccion_text.property("html")
+            or self.TEXTO_RESTRICCION_DEFECTO,
+            self._guardar_restriccion,
         )
+
     from PySide6.QtGui import QTextDocument
 
     def _guardar_decomiso(self, html_limpio: str):
@@ -1232,7 +1369,6 @@ class SentenciaWidget(QWidget):
         preview = doc.toPlainText().replace("\n", " ")[:200]
         self.var_restriccion_text.setText(preview)
         self.actualizar_plantilla()
-
 
     TEXTO_RESTRICCION_DEFECTO = (
         "dadas las características y el contexto de la victimización acreditada en los presentes, considero adecuado imponer a XXX la prohibición de "
@@ -1265,15 +1401,14 @@ class SentenciaWidget(QWidget):
         el HTML completo que guardamos en la property “html”.
         """
         html_actual = self.var_resuelvo.property("html")  # HTML íntegro
-        if not html_actual:                               # primera vez
-            html_actual = self.var_resuelvo.text()        # lo que haya
+        if not html_actual:  # primera vez
+            html_actual = self.var_resuelvo.text()  # lo que haya
 
         self._rich_text_dialog(
             "Editar texto de Resuelvo",
-            html_actual,                  # ← usa la variable, no vuelvas a leer
-            self._guardar_resuelvo_html
+            html_actual,  # ← usa la variable, no vuelvas a leer
+            self._guardar_resuelvo_html,
         )
-
 
     def _guardar_resuelvo_html(self, html_limpio: str) -> None:
         clean = html_limpio.strip()
@@ -1283,13 +1418,15 @@ class SentenciaWidget(QWidget):
 
         # 2) genero un preview de 0‒200 c (solo texto)
         from PySide6.QtGui import QTextDocument
-        doc = QTextDocument(); doc.setHtml(clean)
+
+        doc = QTextDocument()
+        doc.setHtml(clean)
         preview = doc.toPlainText().replace("\n", " ")[:200]
         self.var_resuelvo.setText(preview)
 
         # 3) ***ACTUALIZO el modelo compartido***
-        self.data.resuelvo_html = clean           # HTML íntegro
-        self.data.resuelvo      = preview         # texto plano corto
+        self.data.resuelvo_html = clean  # HTML íntegro
+        self.data.resuelvo = preview  # texto plano corto
 
         # 2-b  si la ventana de Trámites existe, actualiza su preview
         if getattr(self, "main_win", None):
@@ -1321,7 +1458,7 @@ class SentenciaWidget(QWidget):
         self.left_scroll.setWidgetResizable(True)
 
         self.left_container = QWidget()
-        self.left_layout    = QVBoxLayout(self.left_container)
+        self.left_layout = QVBoxLayout(self.left_container)
         # Compactamos el espacio vertical en el panel izquierdo
         self.left_layout.setSpacing(2)
         # Mantenemos los campos pegados al inicio para evitar que se
@@ -1333,8 +1470,12 @@ class SentenciaWidget(QWidget):
         self.hechos_group = CollapsibleGroup("Hechos")
         self.extra_group = CollapsibleGroup("Otras opciones")
 
-        for grp in (self.general_group, self.imputados_group,
-                    self.hechos_group, self.extra_group):
+        for grp in (
+            self.general_group,
+            self.imputados_group,
+            self.hechos_group,
+            self.extra_group,
+        ):
             self.left_layout.addWidget(grp)
 
         self.left_scroll.setWidget(self.left_container)
@@ -1346,7 +1487,7 @@ class SentenciaWidget(QWidget):
 
         # ------------------------------------------------------------------
         self.btn_generar_docx = QPushButton("Generar Word")
-        self.btn_copiar       = QPushButton("Copiar sentencia")
+        self.btn_copiar = QPushButton("Copiar sentencia")
         self.btn_ver_tramites = QPushButton("▶ Ver trámites")
 
         for b in (self.btn_generar_docx, self.btn_copiar, self.btn_ver_tramites):
@@ -1354,8 +1495,8 @@ class SentenciaWidget(QWidget):
 
         self.btn_ver_tramites.clicked.connect(self.abrir_tramites)
         self.btn_generar_docx.clicked.connect(self.generar_docx_con_html)
-        self.btn_copiar.clicked.connect(lambda checked:
-            self.copiar_sentencia(self.texto_plantilla)
+        self.btn_copiar.clicked.connect(
+            lambda checked: self.copiar_sentencia(self.texto_plantilla)
         )
 
         # ------------------------------------------------------------------
@@ -1550,18 +1691,6 @@ class SentenciaWidget(QWidget):
         extra_layout.addWidget(self.var_victima_manifestacion, row, 1)
         row += 1
 
-        lbl_prueba = QLabel("Pruebas:")
-        extra_layout.addWidget(lbl_prueba, row, 0)
-        extra_layout.addWidget(self.btn_prueba, row, 1)
-        row += 1
-
-        lbl_pruebrel = QLabel("Pruebas relevantes:")
-        extra_layout.addWidget(lbl_pruebrel, row, 0)
-        extra_layout.addWidget(self.btn_pruebas_importantes, row, 1)
-        row += 1
-
-
-
         lbl_calif = QLabel("Calificación legal:")
         extra_layout.addWidget(lbl_calif, row, 0)
         extra_layout.addWidget(self.var_calificacion_legal, row, 1)
@@ -1585,32 +1714,12 @@ class SentenciaWidget(QWidget):
         lbl_deco = QLabel("¿Decomiso?")
         extra_layout.addWidget(lbl_deco, row, 0)
         extra_layout.addWidget(self.var_decomiso_option, row, 1)
-        btn_decomiso = QPushButton("Editar texto de Decomiso")
-        extra_layout.addWidget(btn_decomiso, row, 2)
-        btn_decomiso.clicked.connect(self.abrir_ventana_decomiso)
         row += 1
 
         lbl_restr = QLabel("¿Restricción de contacto?")
         extra_layout.addWidget(lbl_restr, row, 0)
         extra_layout.addWidget(self.var_restriccion_option, row, 1)
-        btn_restriccion = QPushButton("Editar texto de Restricción")
-        extra_layout.addWidget(btn_restriccion, row, 2)
-        btn_restriccion.clicked.connect(self.abrir_ventana_restriccion)
         row += 1
-
-        lbl_res = QLabel("Resuelvo:")
-        extra_layout.addWidget(lbl_res, row, 0)
-        self.var_resuelvo = QLineEdit()
-        self.var_resuelvo.setVisible(False)
-        self.btn_resuelvo = QPushButton("Editar resuelvo")
-        extra_layout.addWidget(self.btn_resuelvo, row, 1)
-        row += 1
-
-        self.extra_group.content_area.setLayout(extra_layout)
-
-        self.data.apply_to_sentencia(self)
-
-    def generar_docx_con_html(self):
         """Genera un DOCX respetando <p>, <b> e <i> usando un parser ligero."""
         from html import unescape
         from html.parser import HTMLParser
@@ -1626,13 +1735,13 @@ class SentenciaWidget(QWidget):
 
         # Pasamos por _sanitize_html para quitar spans/estilos extra
         raw_html = _sanitize_html(basic_html)
-                # ───── PARCHE: asegurar apertura de <p> ─────
-        if not re.match(r'\s*<p\b', raw_html, flags=re.I):
+        # ───── PARCHE: asegurar apertura de <p> ─────
+        if not re.match(r"\s*<p\b", raw_html, flags=re.I):
             # Busco el primer cierre </p>.  Si existe, corto ahí.
-            m = re.search(r'</p>', raw_html, flags=re.I)
+            m = re.search(r"</p>", raw_html, flags=re.I)
             if m:
-                head = raw_html[:m.start()]          # texto hasta </p>
-                tail = raw_html[m.start():]          # desde </p> inclusive
+                head = raw_html[: m.start()]  # texto hasta </p>
+                tail = raw_html[m.start() :]  # desde </p> inclusive
                 raw_html = f'<p align="justify">{head}</p>{tail}'
             else:
                 # No hay ningún </p>: lo encierro todo
@@ -1641,6 +1750,7 @@ class SentenciaWidget(QWidget):
         print("=== RAW_HTML (primeros 400) ===")
         print(raw_html[:400])
         print("================================")
+
         class Parser(HTMLParser):
             def __init__(self):
                 super().__init__()
@@ -1652,7 +1762,7 @@ class SentenciaWidget(QWidget):
                 t = tag.lower()
                 if t == "p":
                     if self._in_p:
-                        self.paragraphs.append(self._current)   # guarda el que estaba
+                        self.paragraphs.append(self._current)  # guarda el que estaba
                     self._in_p = True
                     self._current = []
                 elif t in ("b", "i") and self._in_p:
@@ -1675,10 +1785,11 @@ class SentenciaWidget(QWidget):
         parser.feed(raw_html)
         # ─── DEBUG 2 ───
         print("Cantidad de párrafos:", len(parser.paragraphs))
-        for i, par in enumerate(parser.paragraphs[:3]):   # miramos los primeros 3
-            print(f"Párrafo {i}:",
-                "".join(t[1] if t[0] == "text" else f"<{t[0]}…>"
-                        for t in par))
+        for i, par in enumerate(parser.paragraphs[:3]):  # miramos los primeros 3
+            print(
+                f"Párrafo {i}:",
+                "".join(t[1] if t[0] == "text" else f"<{t[0]}…>" for t in par),
+            )
         paragraphs = parser.paragraphs or [[("text", raw_html)]]
 
         document = Document()
@@ -1731,7 +1842,9 @@ class SentenciaWidget(QWidget):
         self.rb_fiscal_m.toggled.connect(self.actualizar_plantilla)
         self.rb_fiscal_f.toggled.connect(self.actualizar_plantilla)
         self.var_dia_audiencia.textChanged.connect(self.actualizar_plantilla)
-        self.var_num_imputados.valueChanged.connect(lambda: (self.update_imputados_section(), self.actualizar_plantilla()))
+        self.var_num_imputados.valueChanged.connect(
+            lambda: (self.update_imputados_section(), self.actualizar_plantilla())
+        )
         self.var_caso_vf.currentTextChanged.connect(self.actualizar_plantilla)
         self.var_num_hechos.valueChanged.connect(self.update_hechos_section)
         self.var_num_hechos.valueChanged.connect(self.actualizar_plantilla)
@@ -1742,19 +1855,27 @@ class SentenciaWidget(QWidget):
         self.var_victima_manifestacion.textChanged.connect(self.actualizar_plantilla)
 
         self.texto_plantilla.anchorClicked.connect(self._on_anchor_clicked)
-        self.var_calificacion_legal.currentTextChanged.connect(self.actualizar_plantilla)
-        self.var_calificacion_legal.currentTextChanged.connect(self.update_correccion_state)
+        self.var_calificacion_legal.currentTextChanged.connect(
+            self.actualizar_plantilla
+        )
+        self.var_calificacion_legal.currentTextChanged.connect(
+            self.update_correccion_state
+        )
         self.var_correccion_calif.textChanged.connect(self.actualizar_plantilla)
-        self.var_uso_terminos_potenciales.currentTextChanged.connect(self.actualizar_plantilla)
+        self.var_uso_terminos_potenciales.currentTextChanged.connect(
+            self.actualizar_plantilla
+        )
         self.var_decomiso_option.currentTextChanged.connect(self.actualizar_plantilla)
-        self.var_restriccion_option.currentTextChanged.connect(self.actualizar_plantilla)
-        self.btn_resuelvo.clicked.connect(self.abrir_ventana_resuelvo)
+        self.var_restriccion_option.currentTextChanged.connect(
+            self.actualizar_plantilla
+        )
 
         self.var_fiscal.textChanged.connect(
-            lambda t: setattr(self.data, "fiscal_nombre", t.strip()))
+            lambda t: setattr(self.data, "fiscal_nombre", t.strip())
+        )
         self.var_num_imputados.valueChanged.connect(
-            lambda v: setattr(self.data, "n_imputados", v))
-
+            lambda v: setattr(self.data, "n_imputados", v)
+        )
 
     def update_correccion_state(self, *_):
         if self.var_calificacion_legal.currentText() == "Incorrecta":
@@ -1769,6 +1890,16 @@ class SentenciaWidget(QWidget):
             self.abrir_ventana_alegato_fiscal()
         elif href == "alegato_defensa":
             self.abrir_ventana_alegato_defensa()
+        elif href == "prueba":
+            self.abrir_ventana_prueba()
+        elif href == "pruebas_importantes":
+            self.abrir_ventana_pruebas_importantes()
+        elif href == "decomiso":
+            self.abrir_ventana_decomiso()
+        elif href == "restriccion":
+            self.abrir_ventana_restriccion()
+        elif href == "resuelvo":
+            self.abrir_ventana_resuelvo()
 
     def add_row(self, row, label_text, widget):
         lbl = QLabel(label_text)
@@ -1779,18 +1910,18 @@ class SentenciaWidget(QWidget):
 
     # tramsent.py  (método del widget)
     def abrir_tramites(self):
-        self.data.from_sentencia(self)     # 1) vuelca todo al modelo
+        self.data.from_sentencia(self)  # 1) vuelca todo al modelo
 
         # 2) refrescamos inmediatamente la ventana principal
-        main = self.parent()               # <- depende de cómo la instancies;
+        main = self.parent()  # <- depende de cómo la instancies;
         while main and not hasattr(main, "rebuild_imputados"):
-            main = main.parent()           # subimos hasta MainWindow
+            main = main.parent()  # subimos hasta MainWindow
         if main:
             self.data.apply_to_main(main)  # ←★ aquí se copian los nombres BBB/CCC
 
-        win = self.window()                # SentenciaWindow
+        win = self.window()  # SentenciaWindow
         win.skip_confirm = True
-        win.close()        
+        win.close()
 
     def showEvent(self, e):
         super().showEvent(e)
@@ -1812,7 +1943,7 @@ class SentenciaWidget(QWidget):
             layout.addWidget(lbl_nombre, 0, 0)
             layout.addWidget(le_nombre, 0, 1, 1, 3)
             le_nombre.textChanged.connect(
-                lambda txt, i=idx-1: self._sync_imp(i, "nombre", txt)
+                lambda txt, i=idx - 1: self._sync_imp(i, "nombre", txt)
             )
             lbl_sexo = QLabel("Sexo:")
             rb_m = QRadioButton("M")
@@ -1827,18 +1958,18 @@ class SentenciaWidget(QWidget):
             lbl_datos = QLabel("Datos personales:")
             le_datos = QLineEdit()
             btn_datos = QPushButton("Editar datos personales")
-            btn_datos.clicked.connect(partial(self.abrir_ventana_datos, idx-1))
+            btn_datos.clicked.connect(partial(self.abrir_ventana_datos, idx - 1))
             layout.addWidget(lbl_datos, 2, 0)
             layout.addWidget(btn_datos, 2, 1, 1, 3)
             le_datos.textChanged.connect(
-                lambda txt, i=idx-1: self._sync_imp(i, "datos", txt)
+                lambda txt, i=idx - 1: self._sync_imp(i, "datos", txt)
             )
             lbl_defensor = QLabel("Defensor (nombre):")
             le_defensor = QLineEdit()
             layout.addWidget(lbl_defensor, 3, 0)
             layout.addWidget(le_defensor, 3, 1, 1, 3)
             le_defensor.textChanged.connect(
-                lambda txt, i=idx-1: self._sync_imp(i, "defensa", txt)
+                lambda txt, i=idx - 1: self._sync_imp(i, "defensa", txt)
             )
             lbl_tipo_def = QLabel("Tipo de Defensor:")
             cb_tipo_def = NoWheelComboBox()
@@ -1851,18 +1982,18 @@ class SentenciaWidget(QWidget):
             layout.addWidget(lbl_delitos, 6, 0)
             layout.addWidget(le_delitos, 6, 1, 1, 3)
             le_delitos.textChanged.connect(
-                lambda txt, i=idx-1: self._sync_imp(i, "delitos", txt)
+                lambda txt, i=idx - 1: self._sync_imp(i, "delitos", txt)
             )
             lbl_condena = QLabel("Condena:")
             le_condena = QLineEdit()
             layout.addWidget(lbl_condena, 7, 0)
             layout.addWidget(le_condena, 7, 1, 1, 3)
             le_condena.textChanged.connect(
-                lambda txt, i=idx-1: self._sync_imp(i, "condena", txt)
+                lambda txt, i=idx - 1: self._sync_imp(i, "condena", txt)
             )
             lbl_cond = QLabel("Datos personales agregados:")
             btn_cond = QPushButton("Editar datos agregados")
-            btn_cond.clicked.connect(partial(self.abrir_ventana_condiciones, idx-1))
+            btn_cond.clicked.connect(partial(self.abrir_ventana_condiciones, idx - 1))
             le_cond = QLineEdit()
             layout.addWidget(lbl_cond, 8, 0)
             # botón en columna 1, colspan=2
@@ -1881,22 +2012,31 @@ class SentenciaWidget(QWidget):
             le_ant = QLineEdit()
             btn_ant = QPushButton("Editar antecedentes")
             btn_ant.setEnabled(False)
-            rb_ant_si.toggled.connect(lambda checked, w=le_ant, b=btn_ant: (w.setEnabled(checked), b.setEnabled(checked)))
-            btn_ant.clicked.connect(partial(self.abrir_ventana_antecedentes, idx-1))
+            rb_ant_si.toggled.connect(
+                lambda checked, w=le_ant, b=btn_ant: (
+                    w.setEnabled(checked),
+                    b.setEnabled(checked),
+                )
+            )
+            btn_ant.clicked.connect(partial(self.abrir_ventana_antecedentes, idx - 1))
             layout.addWidget(lbl_ant_text, 10, 0)
             layout.addWidget(btn_ant, 10, 1, 1, 3)
 
             lbl_confesion = QLabel("Confesión:")
             le_confesion = QLineEdit()
             btn_confesion = QPushButton("Editar confesión")
-            btn_confesion.clicked.connect(partial(self.abrir_ventana_confesion, idx-1))
+            btn_confesion.clicked.connect(
+                partial(self.abrir_ventana_confesion, idx - 1)
+            )
             layout.addWidget(lbl_confesion, 11, 0)
             layout.addWidget(btn_confesion, 11, 1, 1, 3)
 
             lbl_ultima = QLabel("Última palabra:")
             le_ultima = QLineEdit()
             btn_ultima = QPushButton("Editar última palabra")
-            btn_ultima.clicked.connect(partial(self.abrir_ventana_ultima_palabra, idx-1))
+            btn_ultima.clicked.connect(
+                partial(self.abrir_ventana_ultima_palabra, idx - 1)
+            )
             layout.addWidget(lbl_ultima, 12, 0)
             layout.addWidget(btn_ultima, 12, 1, 1, 3)
             lbl_pautas = QLabel("Pautas de mensuración:")
@@ -1904,7 +2044,7 @@ class SentenciaWidget(QWidget):
             btn_pautas = QPushButton("Añadir pautas de mensuración")
 
             # Hacemos que abra el diálogo rico sobre el QLineEdit de pautas:
-            btn_pautas.clicked.connect(partial(self.abrir_ventana_pautas, idx-1))
+            btn_pautas.clicked.connect(partial(self.abrir_ventana_pautas, idx - 1))
 
             # Cuando el usuario edite el QLineEdit, refrescamos la plantilla:
             le_pautas.textChanged.connect(self.actualizar_plantilla)
@@ -1913,42 +2053,57 @@ class SentenciaWidget(QWidget):
             layout.addWidget(lbl_pautas, 13, 0)
             layout.addWidget(btn_pautas, 13, 1, 1, 3)
 
-            if idx-1 < len(self.data.imputados):
-                dprev = self.data.imputados[idx-1]
-                le_nombre.setText( dprev.get("nombre",  "") )
-                le_datos .setText( dprev.get("datos",   "") )
-                le_cond.setText( dprev.get("condiciones", "") )
-                le_defensor.setText(dprev.get("defensa", "") )
-                le_condena   .setText( dprev.get("condena",    "") )
-                le_delitos.setText( dprev.get("delitos", "") )
-                le_pautas.setText( dprev.get("pautas", "") )
-            
+            if idx - 1 < len(self.data.imputados):
+                dprev = self.data.imputados[idx - 1]
+                le_nombre.setText(dprev.get("nombre", ""))
+                le_datos.setText(dprev.get("datos", ""))
+                le_cond.setText(dprev.get("condiciones", ""))
+                le_defensor.setText(dprev.get("defensa", ""))
+                le_condena.setText(dprev.get("condena", ""))
+                le_delitos.setText(dprev.get("delitos", ""))
+                le_pautas.setText(dprev.get("pautas", ""))
+
             container.setLayout(layout)
             self.imputados_layout.addWidget(container)
-            for w in [le_nombre, le_datos, le_defensor, le_delitos, le_condena, le_cond, le_ant, le_confesion, le_ultima, le_pautas]:
+            for w in [
+                le_nombre,
+                le_datos,
+                le_defensor,
+                le_delitos,
+                le_condena,
+                le_cond,
+                le_ant,
+                le_confesion,
+                le_ultima,
+                le_pautas,
+            ]:
                 w.textChanged.connect(self.actualizar_plantilla)
             for w in [rb_m, rb_f, rb_ant_no, rb_ant_si]:
                 w.toggled.connect(self.actualizar_plantilla)
             for w in [cb_tipo_def]:
                 w.currentTextChanged.connect(self.actualizar_plantilla)
-            
-            self.imputados.append({
-                "container": container,
-                "nombre": le_nombre,
-                "sexo_rb": (rb_m, rb_f),
-                "datos": le_datos,
-                "defensor": le_defensor,
-                "tipo_def": cb_tipo_def,
-                "delitos": le_delitos,
-                "condena": le_condena,
-                "condiciones": le_cond,
-                "antecedentes_opcion": (rb_ant_no, rb_ant_si),
-                "antecedentes": le_ant,
-                "confesion": le_confesion,
-                "ultima": le_ultima,
-                "pautas": le_pautas,
-            })
-        if len(self.hechos) >= self.var_num_hechos.value():   # ya está lista la sección Hechos
+
+            self.imputados.append(
+                {
+                    "container": container,
+                    "nombre": le_nombre,
+                    "sexo_rb": (rb_m, rb_f),
+                    "datos": le_datos,
+                    "defensor": le_defensor,
+                    "tipo_def": cb_tipo_def,
+                    "delitos": le_delitos,
+                    "condena": le_condena,
+                    "condiciones": le_cond,
+                    "antecedentes_opcion": (rb_ant_no, rb_ant_si),
+                    "antecedentes": le_ant,
+                    "confesion": le_confesion,
+                    "ultima": le_ultima,
+                    "pautas": le_pautas,
+                }
+            )
+        if (
+            len(self.hechos) >= self.var_num_hechos.value()
+        ):  # ya está lista la sección Hechos
             self.actualizar_plantilla()
 
     def update_hechos_section(self):
@@ -1958,7 +2113,7 @@ class SentenciaWidget(QWidget):
             w["container"].deleteLater()
         # ——— Aquí creas los nuevos hechos ———
         while len(self.hechos) < n:
-            idx = len(self.hechos)              # índice 0-based
+            idx = len(self.hechos)  # índice 0-based
             container = QWidget()
             layout = QGridLayout(container)
 
@@ -2009,17 +2164,19 @@ class SentenciaWidget(QWidget):
                 w.textChanged.connect(self.actualizar_plantilla)
             for w in [rb_j, rb_f]:
                 w.toggled.connect(self.actualizar_plantilla)
-            
-            self.hechos.append({
-                "container": container,
-                "descripcion": le_desc,
-                "aclaraciones": le_aclar,
-                "oficina": le_ofi,
-                "rb_j": rb_j,
-                "rb_f": rb_f,
-                "num_auto": le_auto,
-                "fecha_elev": le_fec,
-            })
+
+            self.hechos.append(
+                {
+                    "container": container,
+                    "descripcion": le_desc,
+                    "aclaraciones": le_aclar,
+                    "oficina": le_ofi,
+                    "rb_j": rb_j,
+                    "rb_f": rb_f,
+                    "num_auto": le_auto,
+                    "fecha_elev": le_fec,
+                }
+            )
         self.actualizar_plantilla()
 
     def get_sexos_imputados(self):
@@ -2034,10 +2191,10 @@ class SentenciaWidget(QWidget):
     def actualizar_plantilla(self):
         sb = self.texto_plantilla.verticalScrollBar()
         pos = sb.value()
-        
+
         if not self.imputados:
             return
-        
+
         n_imp = self.var_num_imputados.value()
         n_hec = self.var_num_hechos.value()
         ...
@@ -2049,7 +2206,6 @@ class SentenciaWidget(QWidget):
                 self.hechos[i]["descripcion"].property("html")
                 or self.hechos[i]["descripcion"].text()
             ).strip()
-
 
         # 1) Localidad
         localidad = self.var_localidad.text().strip()
@@ -2087,7 +2243,7 @@ class SentenciaWidget(QWidget):
         fiscal_nombre = self.var_fiscal.text().strip()
         fiscal_articulo = "el" if self.rb_fiscal_m.isChecked() else "la"
 
-        # 8) Imputados => para “el/la/las/los imputado/a/as/os”, 
+        # 8) Imputados => para “el/la/las/los imputado/a/as/os”,
         n_imp = self.var_num_imputados.value()
         sexos = self.get_sexos_imputados()
         cant_masc = sum(1 for s in sexos if s == "M")
@@ -2120,7 +2276,6 @@ class SentenciaWidget(QWidget):
                 imput_label = "los imputados"
                 asistido_label = "asistidos"
                 accused_label = "acusados"
-
 
         if n_imp == 1:
             acusado_label = acusado_label  # ya definimos en el if
@@ -2206,7 +2361,6 @@ class SentenciaWidget(QWidget):
             fecha_elev = h["fecha_elev"].text().strip()
             aclaraciones = h["aclaraciones"].text().strip()
 
-
             if oficina_rb_val == "Juzgado":
                 base = "El auto de elevación a juicio"
                 if num_auto and fecha_elev:
@@ -2236,15 +2390,25 @@ class SentenciaWidget(QWidget):
                 seen.add(norm)
                 unique_acusaciones.append(item)
 
-        base_texts = {"el auto de elevación a juicio", "el requerimiento de citación a juicio"}
-        non_base_exists = any(" ".join(u.strip().lower().split()) not in base_texts for u in unique_acusaciones)
+        base_texts = {
+            "el auto de elevación a juicio",
+            "el requerimiento de citación a juicio",
+        }
+        non_base_exists = any(
+            " ".join(u.strip().lower().split()) not in base_texts
+            for u in unique_acusaciones
+        )
         if non_base_exists and len(unique_acusaciones) > 1:
-            unique_acusaciones = [u for u in unique_acusaciones if " ".join(u.strip().lower().split()) not in base_texts]
+            unique_acusaciones = [
+                u
+                for u in unique_acusaciones
+                if " ".join(u.strip().lower().split()) not in base_texts
+            ]
 
         for i, uacc in enumerate(unique_acusaciones):
             uacc = uacc.strip()
             # Elimina comas, puntos, o punto y coma finales
-            while len(uacc) > 0 and uacc[-1] in [',', ';', '.']:
+            while len(uacc) > 0 and uacc[-1] in [",", ";", "."]:
                 uacc = uacc[:-1]
 
             # Si no es el primer ítem, forzalo a comenzar en minúscula
@@ -2253,7 +2417,6 @@ class SentenciaWidget(QWidget):
                 uacc = uacc[0].lower() + uacc[1:]
 
             unique_acusaciones[i] = uacc
-
 
         acus_unificado = format_list_with_semicolons(unique_acusaciones)
 
@@ -2289,12 +2452,12 @@ class SentenciaWidget(QWidget):
             hechos_label = "el siguiente hecho"
         else:
             hechos_label = "los siguientes hechos"
-        
+
         plantilla += (
-    f"<p align='justify'>"
-    f"{acus_unificado} {verbo_atribuir} {al_imput_label} {hechos_label}:"
-    f"</p>"
-)
+            f"<p align='justify'>"
+            f"{acus_unificado} {verbo_atribuir} {al_imput_label} {hechos_label}:"
+            f"</p>"
+        )
 
         # Listado de hechos
         for i in range(min(n_hec, len(self.hechos))):
@@ -2305,11 +2468,15 @@ class SentenciaWidget(QWidget):
             aclar_str = self.hechos[i]["aclaraciones"].text().strip()
             if n_hec == 1:
                 if aclar_str:
-                    plantilla += f"<p align='justify'><i>{desc_str}</i> ({aclar_str})</p>"
+                    plantilla += (
+                        f"<p align='justify'><i>{desc_str}</i> ({aclar_str})</p>"
+                    )
                 else:
                     plantilla += f"<p align='justify'><i>{desc_str}</i></p>"
             else:
-                ordinal = ORDINALES_HECHOS[i] if i < len(ORDINALES_HECHOS) else f"{i+1}°"
+                ordinal = (
+                    ORDINALES_HECHOS[i] if i < len(ORDINALES_HECHOS) else f"{i+1}°"
+                )
                 if aclar_str:
                     plantilla += f"<p align='justify'><b>{ordinal} hecho ({aclar_str})</b>: <i>{desc_str}</i></p>"
                 else:
@@ -2346,7 +2513,12 @@ class SentenciaWidget(QWidget):
         acus_unificado_minus = acus_unificado
 
         import re
-        acus_unificado_minus = re.sub(r'^(El|La|Los|Las)\b', lambda m: m.group(1).lower(), acus_unificado_minus.strip())
+
+        acus_unificado_minus = re.sub(
+            r"^(El|La|Los|Las)\b",
+            lambda m: m.group(1).lower(),
+            acus_unificado_minus.strip(),
+        )
 
         if n_hec == 1:
             hecho_label2 = "del hecho contenido"
@@ -2400,12 +2572,16 @@ class SentenciaWidget(QWidget):
         if not accusations_grouped:
             pass
         elif len(accusations_grouped) == 1:
-            plantilla += f"<p align='justify'>{acusacion_prefix} a {accusations_grouped[0]}.</p>"
+            plantilla += (
+                f"<p align='justify'>{acusacion_prefix} a {accusations_grouped[0]}.</p>"
+            )
         else:
             accusations_with_a = [f"a {x}" for x in accusations_grouped]
             last = accusations_with_a.pop()
             joined = "; ".join(accusations_with_a)
-            plantilla += f"<p align='justify'>{acusacion_prefix} {joined}; y {last}.</p>"
+            plantilla += (
+                f"<p align='justify'>{acusacion_prefix} {joined}; y {last}.</p>"
+            )
 
         # Siguientes secciones “II. Trámite de juicio abreviado...”, etc.
         # (Las copio sin tocar)
@@ -2414,7 +2590,11 @@ class SentenciaWidget(QWidget):
             defense_text = "la defensa"
             agreement_text = "del acuerdo alcanzado"
         else:
-            unique_defenders = {imp["defensor"].text().strip() for imp in self.imputados if imp["defensor"].text().strip()}
+            unique_defenders = {
+                imp["defensor"].text().strip()
+                for imp in self.imputados
+                if imp["defensor"].text().strip()
+            }
             defense_text = "las defensas" if len(unique_defenders) > 1 else "la defensa"
             agreement_text = "de los acuerdos alcanzados"
 
@@ -2434,18 +2614,16 @@ class SentenciaWidget(QWidget):
                 nombre_tmp = self.imputados[i]["nombre"].text().strip()
                 if not nombre_tmp:
                     nombre_tmp = f"Imputado#{i+1}"
-                frag_penas.append(f"para {nombre_tmp}, la de {self.imputados[i]['condena'].text().strip()}")
+                frag_penas.append(
+                    f"para {nombre_tmp}, la de {self.imputados[i]['condena'].text().strip()}"
+                )
             acuerdo_str = strip_trailing_single_dot(
                 format_list_with_semicolons(frag_penas)
             )
             plantilla += f"determinó {acuerdo_str}.</p>"
 
-        sujeto_str = strip_trailing_single_dot(
-            self.var_sujeto_eventual.text().strip()
-        )
-        mani_str = strip_trailing_single_dot(
-            self.var_manifestacion.text().strip()
-        )
+        sujeto_str = strip_trailing_single_dot(self.var_sujeto_eventual.text().strip())
+        mani_str = strip_trailing_single_dot(self.var_manifestacion.text().strip())
         if sujeto_str or mani_str:
             plantilla += (
                 f"<p align='justify'>Se le concedió la palabra a {sujeto_str} "
@@ -2469,17 +2647,19 @@ class SentenciaWidget(QWidget):
             verb_comp = "comprendían"
             verb_con = "conocían"
 
-        plantilla += (
-            f"<p align='justify'>Las características de esta modalidad de juzgamiento y del acuerdo mencionado fueron explicados por el tribunal {acus_label}, y se verificó así que {verb_comp} su contenido y sus consecuencias, que {verb_con} su derecho a exigir un juicio oral, y que su conformidad era libre y voluntaria.</p>"
-        )
+        plantilla += f"<p align='justify'>Las características de esta modalidad de juzgamiento y del acuerdo mencionado fueron explicados por el tribunal {acus_label}, y se verificó así que {verb_comp} su contenido y sus consecuencias, que {verb_con} su derecho a exigir un juicio oral, y que su conformidad era libre y voluntaria.</p>"
 
         victim = strip_trailing_single_dot(
-            self.var_victima.text().strip() if self.var_victima.text().strip() else "la víctima"
+            self.var_victima.text().strip()
+            if self.var_victima.text().strip()
+            else "la víctima"
         )
         manifest_victim = strip_trailing_single_dot(
             self.var_victima_manifestacion.text().strip()
         )
-        victim_plural_mode = (self.var_victima_plural.currentText().strip().lower() == "más")
+        victim_plural_mode = (
+            self.var_victima_plural.currentText().strip().lower() == "más"
+        )
         if manifest_victim:
             if victim_plural_mode:
                 plantilla += f"<p align='justify'>Además, el fiscal hizo saber que {victim} fueron previamente informadas acerca de dichos aspectos y que manifestaron {manifest_victim}.</p>"
@@ -2494,9 +2674,13 @@ class SentenciaWidget(QWidget):
                 header = "<p align='justify'><b>b) Declaración de la imputada:</b></p>"
         else:
             if all(s == "F" for s in sexos):
-                header = "<p align='justify'><b>b) Declaración de las imputadas:</b></p>"
+                header = (
+                    "<p align='justify'><b>b) Declaración de las imputadas:</b></p>"
+                )
             else:
-                header = "<p align='justify'><b>b) Declaración de los imputados:</b></p>"
+                header = (
+                    "<p align='justify'><b>b) Declaración de los imputados:</b></p>"
+                )
 
         plantilla += header
 
@@ -2513,9 +2697,7 @@ class SentenciaWidget(QWidget):
             else:
                 interrogado = "al ser interrogados"
 
-        plantilla += (
-            f"<p align='justify'><b>Condiciones personales:</b> {interrogado} por el tribunal y las partes, además de los datos consignados al comienzo de esta resolución, "
-        )
+        plantilla += f"<p align='justify'><b>Condiciones personales:</b> {interrogado} por el tribunal y las partes, además de los datos consignados al comienzo de esta resolución, "
 
         prefixes = ["A su vez, ", "Por su parte, ", "A su turno, ", "También, "]
         verbs = ["agregó", "dijo", "mencionó", "añadió"]
@@ -2531,8 +2713,7 @@ class SentenciaWidget(QWidget):
             name_i = f"<b>{final_names_list[i]}</b>"
             condiciones = strip_trailing_single_dot(
                 (
-                    imp["condiciones"].property("html")
-                    or imp["condiciones"].text()
+                    imp["condiciones"].property("html") or imp["condiciones"].text()
                 ).strip()
             )
             verb = verbs[i % len(verbs)]
@@ -2540,7 +2721,7 @@ class SentenciaWidget(QWidget):
             if i == 0:
                 plantilla += f"{name_i} {verb} que {condiciones}."
             else:
-                prefix = prefixes[(i-1) % len(prefixes)]
+                prefix = prefixes[(i - 1) % len(prefixes)]
                 plantilla += f" {prefix}{name_i} {verb} que {condiciones}."
 
         plantilla += "</p>"
@@ -2558,7 +2739,9 @@ class SentenciaWidget(QWidget):
                 if ant_text:
                     si_registra_list.append((name_i, ant_text))
                 else:
-                    si_registra_list.append((name_i, "registra antecedentes penales (sin detalle)."))
+                    si_registra_list.append(
+                        (name_i, "registra antecedentes penales (sin detalle).")
+                    )
 
         mentions = []
         if no_registra_list:
@@ -2569,8 +2752,10 @@ class SentenciaWidget(QWidget):
                 mention_sin = f"{conj} no registran condenas computables."
             mentions.append(mention_sin)
 
-        for (nombre_en_negrita, texto_antecedentes) in si_registra_list:
-            mentions.append(f"{nombre_en_negrita} registra los siguientes antecedentes: {texto_antecedentes}")
+        for nombre_en_negrita, texto_antecedentes in si_registra_list:
+            mentions.append(
+                f"{nombre_en_negrita} registra los siguientes antecedentes: {texto_antecedentes}"
+            )
 
         if not mentions:
             plantilla += (
@@ -2586,7 +2771,7 @@ class SentenciaWidget(QWidget):
                 if i == 0:
                     texto_antecedentes += mention
                 else:
-                    es_ultima = (i == total_m - 1)
+                    es_ultima = i == total_m - 1
                     if i == 1 and no_registra_list and si_registra_list:
                         prefix = "Por su parte,"
                     else:
@@ -2625,7 +2810,7 @@ class SentenciaWidget(QWidget):
                     f"sin que su silencio implique una presunción de culpabilidad (arts. 385 y 259 CPP) sino la sola consecuencia "
                     f"de impedir el trámite del art. 415 CPP."
                 )
-            
+
             conf_text = strip_trailing_single_dot(
                 self.imputados[0]["confesion"].text().strip()
             )
@@ -2654,13 +2839,13 @@ class SentenciaWidget(QWidget):
             verbs_cycle = ["expresó", "manifestó", "refirió", "declaró", "afirmó"]
             for i, imp in enumerate(self.imputados):
                 nm = final_names_list[i]
-                conf_text = strip_trailing_single_dot(
-                    imp["confesion"].text().strip()
-                )
+                conf_text = strip_trailing_single_dot(imp["confesion"].text().strip())
                 prefix = prefixes_cycle[i % len(prefixes_cycle)]
                 verb = verbs_cycle[i % len(verbs_cycle)]
                 if conf_text:
-                    plantilla += f"<p align='justify'>{prefix} {nm} {verb}: “{conf_text}”.</p>"
+                    plantilla += (
+                        f"<p align='justify'>{prefix} {nm} {verb}: “{conf_text}”.</p>"
+                    )
                 else:
                     plantilla += f"<p align='justify'>{prefix} {nm} .</p>"
 
@@ -2695,7 +2880,7 @@ class SentenciaWidget(QWidget):
             f"atribuida por la acusación.</p>"
         )
 
-        calif_es_correcta = (self.var_calificacion_legal.currentText() == "Correcta")
+        calif_es_correcta = self.var_calificacion_legal.currentText() == "Correcta"
 
         n_hec = self.var_num_hechos.value()
         # (Tramo idéntico al original)
@@ -2755,13 +2940,17 @@ class SentenciaWidget(QWidget):
                 )
 
         plantilla += f"<p align='justify'>{calif_text}</p>"
-                # Placeholder para “{la/s solicitud/es formulada/s}”
+        # Placeholder para “{la/s solicitud/es formulada/s}”
         if n_imp == 1:
             solicitudes_str = "la solicitud formulada"
         else:
             solicitudes_str = "las solicitudes formuladas"
 
-        defenders_list = [imp["defensor"].text().strip() for imp in self.imputados if imp["defensor"].text().strip()]
+        defenders_list = [
+            imp["defensor"].text().strip()
+            for imp in self.imputados
+            if imp["defensor"].text().strip()
+        ]
         def_dict = {}
         for i, d in enumerate(defenders_list):
             # Agrupar por defensor (sin repeticiones)
@@ -2782,54 +2971,58 @@ class SentenciaWidget(QWidget):
         else:
             defensa_str = "sus defensas"
 
-
         # Ahora construyes la cadena final reemplazando las partes entre llaves:
         plantilla += (
-            f'Tales constataciones son las únicas habilitadas por la ley al Tribunal en el marco del juicio abreviado '
+            f"Tales constataciones son las únicas habilitadas por la ley al Tribunal en el marco del juicio abreviado "
             f'(TSJ, Sala Penal, S. n° 124, 19/04/2017, "Cabrera", entre otros; Jaime, Marcelo Nicolás, "El juicio abreviado", '
-            f'en AAVV, Comentarios a la reforma del Código Procesal Penal, dir. Maximiliano Hairabedián, Advocatus, 2017, págs. 161/162; '
-            f'Cafferata Nores –Tarditti, cit., T. 2, pág. 314), y por ello corresponde hacer lugar a {solicitudes_str} por el Ministerio Público Fiscal, '
-            f'{imput_label} y {defensa_str}.'
+            f"en AAVV, Comentarios a la reforma del Código Procesal Penal, dir. Maximiliano Hairabedián, Advocatus, 2017, págs. 161/162; "
+            f"Cafferata Nores –Tarditti, cit., T. 2, pág. 314), y por ello corresponde hacer lugar a {solicitudes_str} por el Ministerio Público Fiscal, "
+            f"{imput_label} y {defensa_str}."
         )
 
         aleg_fiscal = self.var_alegato_fiscal.strip()
         if not aleg_fiscal:
             aleg_fiscal = "[alegato fiscal]"
-        aleg_fiscal = (
-            f"<a href=\"alegato_fiscal\" style=\"background-color:#ffffcc;color:black;text-decoration:none;\">{aleg_fiscal}</a>"
-        )
+        aleg_fiscal = f'<a href="alegato_fiscal" style="background-color:#ffffcc;color:black;text-decoration:none;">{aleg_fiscal}</a>'
 
         aleg_defensa = self.var_alegato_defensa.strip()
         if not aleg_defensa:
             aleg_defensa = "[alegato defensa]"
-        aleg_defensa = (
-            f"<a href=\"alegato_defensa\" style=\"background-color:#ffffcc;color:black;text-decoration:none;\">{aleg_defensa}</a>"
-        )
+        aleg_defensa = f'<a href="alegato_defensa" style="background-color:#ffffcc;color:black;text-decoration:none;">{aleg_defensa}</a>'
+
+        prueba_anchor = self.var_prueba.strip()
+        if not prueba_anchor:
+            prueba_anchor = "[pruebas]"
+        prueba_anchor = f'<a href="prueba" style="background-color:#ffffcc;color:black;text-decoration:none;">{prueba_anchor}</a>'
 
         plantilla += (
             f"<p align='justify'><b>3. Enumeración de la prueba:</b> "
             f"según lo dispuesto por el artículo 415 CPP y a pedido de las partes, "
-            f"se incorporó la prueba recolectada durante la investigación penal preparatoria y la investigación preliminar: {self.var_prueba}</p>"
+            f"se incorporó la prueba recolectada durante la investigación penal preparatoria y la investigación preliminar: {prueba_anchor}</p>"
             f"<p align='justify'><b>4. Discusión final:</b> finalmente, las partes emitieron sus conclusiones de acuerdo con sus respectivos intereses. "
             f"Así, la Fiscalía manifestó {aleg_fiscal}. "
             f"Por su parte, la defensa expuso {aleg_defensa}.</p>"
         )
 
-# ======================================
-# BLOQUE PARA MOSTRAR "ÚLTIMA PALABRA"
-# ======================================
+        # ======================================
+        # BLOQUE PARA MOSTRAR "ÚLTIMA PALABRA"
+        # ======================================
         speakers_2 = []
         non_speakers_2 = []
 
         for i, imp in enumerate(self.imputados):
-            ultima_str = imp["ultima"].text().strip()   # <-- la "Última palabra" ingresada
+            ultima_str = (
+                imp["ultima"].text().strip()
+            )  # <-- la "Última palabra" ingresada
             if ultima_str:
-                speakers_2.append((i, ultima_str))      # este imputado sí habló
+                speakers_2.append((i, ultima_str))  # este imputado sí habló
             else:
-                non_speakers_2.append(i)                # este imputado NO habló
+                non_speakers_2.append(i)  # este imputado NO habló
 
         def nombre(idx):
-            return final_names_list[idx]  # asumes que arriba tenés la lista final_names_list
+            return final_names_list[
+                idx
+            ]  # asumes que arriba tenés la lista final_names_list
 
         # Si NADIE dijo nada y NADIE existe, no hacemos nada
         if not speakers_2 and not non_speakers_2:
@@ -2878,9 +3071,7 @@ class SentenciaWidget(QWidget):
                         )
                     else:
                         # Siguientes oradores
-                        plantilla += (
-                            f"<p align='justify'>Seguidamente, {nm} dijo: “{text_speaker}”.</p>"
-                        )
+                        plantilla += f"<p align='justify'>Seguidamente, {nm} dijo: “{text_speaker}”.</p>"
 
                 # Ahora mencionamos a los que NO hablaron
                 if non_speakers_2:
@@ -2908,7 +3099,7 @@ class SentenciaWidget(QWidget):
             el_los_hecho_s = "los hechos"
             ocurrio_eron = "ocurrieron"
             han_sido_text = "han sido"
-        
+
         if caso_vf == "No":
             if n_imp == 1:
                 imputado_phrase = "del acusado" if sexos[0] == "M" else "de la acusada"
@@ -2920,19 +3111,31 @@ class SentenciaWidget(QWidget):
             le_les = "le" if n_imp == 1 else "les"
             plantilla += f"los elementos de juicio enunciados y los argumentos desarrollados en la acusación base del juicio de la causa aquí juzgada, sumados a la argumentación del fiscal al momento emitir las conclusiones, en las que solicitó la condena –todo lo cual hago mío por razones de brevedad– satisfacen plenamente el estándar probatorio requerido para tener por acreditada la plataforma fáctica bajo análisis y la participación {imputado_phrase} tal como {le_les} ha sido atribuida.</p>"
         else:
-            if caso_vf in ("violencia de género", "violencia familiar", "violencia de género doméstica"):
+            if caso_vf in (
+                "violencia de género",
+                "violencia familiar",
+                "violencia de género doméstica",
+            ):
                 if n_imp == 1:
-                    imputado_phrase = "del acusado" if sexos[0] == "M" else "de la acusada"
+                    imputado_phrase = (
+                        "del acusado" if sexos[0] == "M" else "de la acusada"
+                    )
                 else:
-                    imputado_phrase = "de las acusadas" if all(s == "F" for s in sexos) else "de los imputados"
+                    imputado_phrase = (
+                        "de las acusadas"
+                        if all(s == "F" for s in sexos)
+                        else "de los imputados"
+                    )
                 le_les = "le" if n_imp == 1 else "les"
                 if caso_vf == "violencia de género doméstica":
                     plantilla += f"{el_los_hecho_s} motivo de juzgamiento configuran un caso de violencia de género doméstica. De acuerdo con ello, debe recordarse que el rasgo característico de la violencia de género es el posicionamiento del varón, respecto de la mujer, en una condición de superioridad, a través de cualquiera de los tipos de violencia (art. 5, ley 26485), y en desmedro de su derecho a contar con un ámbito de determinación para su personal proyecto de vida; de allí la demostración de poder, dominación o control por la violencia (TSJ, Sala Penal, S. nº 273, 23/06/2016, “Medina”, entre otros). Estos casos, a su vez, tienen “...particularidades que los diferencian de otros delitos pues aquí la víctima sufre reiterados comportamientos agresivos, una escalada de violencia cada día o semana más agravada y de mayor riesgo, caracterizada por su duración, multiplicidad y aumento de gravedad. Precisamente, el contexto de violencia, comprendido como un fenómeno de múltiples ofensas de gravedad progresiva que se extienden a través del tiempo, debe ser ponderado en su capacidad de suministrar indicios… Máxime, cuando estos hechos ocurren en un marco de vulnerabilidad, dado que raramente se realizan a la vista de terceros, porque una de las características de la dominación por violencia en sus múltiples manifestaciones es precisamente el aislamiento de la víctima. Las particulares características de los hechos de violencia doméstica y de género, hace que cobre especial relevancia, como también sucede con la violencia sexual, el relato de la víctima, el que adquiere un valor convictivo de preferente ponderación en la medida que resulte fiable y se encuentre corroborado por indicios, siempre que éstos tengan una confluencia de conjunto que conduzcan a dotar de razón suficiente la conclusión…” (TSJ, Sala Penal, S. n° 84, 04/05/2012, “Sánchez”, entre muchos otros). Y en función de tales circunstancias, es necesario abordar su investigación y juzgamiento bajo un criterio de amplitud probatoria (TSJ, Sala Penal, S. n° 266, 15/10/2010, “Agüero”; S. nº 28, 11/3/2014, “Sosa”; S. n° 182, 26/05/2017, “Oviedo”; entre muchos otros). Tales exigencias derivan de la obligación de debida diligencia que impone el conjunto de instrumentos internacionales ratificados por nuestro país para este tipo de casos (arts. 7 “b”, Convención Interamericana para Prevenir, Sancionar y Erradicar la Violencia contra la Mujer –Belém do Pará-, 2 “c”, CEDAW). A partir de dicho marco, considero que los elementos de juicio enunciados y los argumentos desarrollados en la acusación base del juicio, sumados a la argumentación del fiscal al momento de emitir las conclusiones, en las que solicitó la condena –todo lo cual hago mío por razones de brevedad– satisfacen plenamente el estándar probatorio requerido para tener por acreditada la plataforma fáctica bajo análisis y la intervención {imputado_phrase} tal como {le_les} ha sido atribuida.</p>"
                 else:
                     plantilla += f"{el_los_hecho_s} motivo de juzgamiento configuran un caso de {caso_vf}. Los elementos de juicio enunciados y los argumentos desarrollados en la acusación base del juicio de la causa aquí juzgada, sumados a la argumentación del fiscal al momento emitir las conclusiones, en las que solicitó la condena –todo lo cual hago mío por razones de brevedad– satisfacen plenamente el estándar probatorio requerido para tener por acreditada la plataforma fáctica y la intervención {imputado_phrase} tal como {le_les} ha sido atribuida.</p>"
 
-
-        pruebas_text = self.var_pruebas_importantes
+        pruebas_text = self.var_pruebas_importantes.strip()
+        if not pruebas_text:
+            pruebas_text = "[pruebas relevantes]"
+        pruebas_text = f'<a href="pruebas_importantes" style="background-color:#ffffcc;color:black;text-decoration:none;">{pruebas_text}</a>'
         plantilla += (
             f"<p align='justify'>Al examinar el contenido de tales evidencias, las encuentro suficientes para dictar una condena, "
             f"pues –sin espacio para el principio según el cual la duda debe favorecer a la persona imputada– ponen de manifiesto que "
@@ -2943,15 +3146,21 @@ class SentenciaWidget(QWidget):
 
         if n_imp == 1:
             defensa_phrase = "del imputado" if sexos[0] == "M" else "de la imputada"
-            acusado_singular_plural = "el imputado" if sexos[0] == "M" else "la imputada"
+            acusado_singular_plural = (
+                "el imputado" if sexos[0] == "M" else "la imputada"
+            )
             es_son = "es"
             debe_s = "debe"
             se_hallaran = "se hallara"
             responsable_s = "responsable"
             tal_es = "tal"
         else:
-            defensa_phrase = "de las acusadas" if cant_fem == n_imp else "de los imputados"
-            acusado_singular_plural = "las acusadas" if all(s == "F" for s in sexos) else "los imputados"
+            defensa_phrase = (
+                "de las acusadas" if cant_fem == n_imp else "de los imputados"
+            )
+            acusado_singular_plural = (
+                "las acusadas" if all(s == "F" for s in sexos) else "los imputados"
+            )
             es_son = "son"
             debe_s = "deben"
             se_hallaran = "se hallaran"
@@ -2969,8 +3178,8 @@ class SentenciaWidget(QWidget):
             f"desgaste innecesario e inútil que, incluso, contradiría los objetivos de economía y celeridad a los que se orienta la modalidad "
             f"abreviada de juicio elegida. Cabe recordar, en este sentido, que tanto el máximo tribunal de la Nación como el de la Provincia, "
             f"han sostenido de manera constante la validez de la argumentación por remisión en la medida en que esas razones sean asequibles, "
-            f"tal como ocurre en el caso (cfme., CSJN \"Macasa S.A. v/ Caja Popular de Ahorro...\", Fallos 319:308; TSJ, Sala Penal, \"Rivero\", "
-            f"S. n° 33, 9/11/1984; \"González\", S. n° 90, 16/10/2002; “Romero”, S. nº 50, 19/3/2008; entre otros). Aclaro, finalmente, "
+            f'tal como ocurre en el caso (cfme., CSJN "Macasa S.A. v/ Caja Popular de Ahorro...", Fallos 319:308; TSJ, Sala Penal, "Rivero", '
+            f'S. n° 33, 9/11/1984; "González", S. n° 90, 16/10/2002; “Romero”, S. nº 50, 19/3/2008; entre otros). Aclaro, finalmente, '
             f"que no existen causales de inimputabilidad o de justificación (adviértase que ninguna de las partes ha hecho invocación alguna en "
             f"ese sentido), por lo que {acusado_singular_plural} {es_son} penalmente {responsable_s} y como {tal_es} {debe_s} responder.</p>"
         )
@@ -3015,17 +3224,16 @@ class SentenciaWidget(QWidget):
 
         salvedad = ""
         if self.var_calificacion_legal.currentText() == "Incorrecta":
-            corr = strip_trailing_single_dot(
-                self.var_correccion_calif.text().strip()
-            )
+            corr = strip_trailing_single_dot(self.var_correccion_calif.text().strip())
             if corr:
                 salvedad = f", con la salvedad de que {corr}"
 
         plantilla += f"<p align='justify'><b>A LA SEGUNDA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
-        calif_es_correcta = (self.var_calificacion_legal.currentText() == "Correcta")
+        calif_es_correcta = self.var_calificacion_legal.currentText() == "Correcta"
         corr = strip_trailing_single_dot(
             self.var_correccion_calif.text().strip()
-            if self.var_calificacion_legal.currentText() == "Incorrecta" else ""
+            if self.var_calificacion_legal.currentText() == "Incorrecta"
+            else ""
         )
 
         calif_list = []
@@ -3049,7 +3257,7 @@ class SentenciaWidget(QWidget):
                 "del juicio y no ha sido materia de controversia por las partes, me exime de mayores "
                 "consideraciones, pues a los fines de la debida motivación jurídica de la sentencia, es "
                 "suficiente la mención de la norma en la que se apoya la decisión (TSJ, Sala Penal, S. n° 190, "
-                'del 11/8/2010, “Castillo”).'
+                "del 11/8/2010, “Castillo”)."
             )
         else:
             salvedad_text = f", con la salvedad de que {corr}" if corr else ""
@@ -3068,9 +3276,7 @@ class SentenciaWidget(QWidget):
             f"<p align='justify'>Así respondo a la presente cuestión.</p>"
         )
 
-        plantilla += (
-            f"<p align='justify'><b>A LA TERCERA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
-        )
+        plantilla += f"<p align='justify'><b>A LA TERCERA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
 
         if n_imp == 1:
             plantilla += (
@@ -3083,7 +3289,12 @@ class SentenciaWidget(QWidget):
                 "objetivas y subjetivas de mensuración de la pena establecidas en los arts. 40 y 41 del CP.</p>"
             )
 
-        introductions = ["respecto de", "en cuanto a", "con relación a", "en lo relativo a"]
+        introductions = [
+            "respecto de",
+            "en cuanto a",
+            "con relación a",
+            "en lo relativo a",
+        ]
         valuation_verbs = ["estimo", "valoro", "pondero", "considero"]
 
         for i, imp in enumerate(self.imputados):
@@ -3094,16 +3305,20 @@ class SentenciaWidget(QWidget):
             intro = introductions[i % len(introductions)]
             verb = valuation_verbs[i % len(valuation_verbs)]
             if i == 0:
-                plantilla += f"<p align='justify'>Así, {intro} {nm}, {verb} {pautas_str}.</p>"
+                plantilla += (
+                    f"<p align='justify'>Así, {intro} {nm}, {verb} {pautas_str}.</p>"
+                )
             else:
                 capital_intro = intro[0].upper() + intro[1:]
-                plantilla += f"<p align='justify'>{capital_intro} {nm}, {verb} {pautas_str}.</p>"
+                plantilla += (
+                    f"<p align='justify'>{capital_intro} {nm}, {verb} {pautas_str}.</p>"
+                )
 
         introductions_2 = [
             "Asimismo,",
             "En el mismo sentido,",
             "De igual manera,",
-            "Del mismo modo,"
+            "Del mismo modo,",
         ]
 
         for i, imp in enumerate(self.imputados):
@@ -3120,19 +3335,16 @@ class SentenciaWidget(QWidget):
                 )
             else:
                 intro2 = introductions_2[(i - 1) % len(introductions_2)]
-                plantilla += (
-                    f"<p align='justify'>{intro2} corresponde imponerle a {nm} la pena de {condena_str}.</p>"
-                )
+                plantilla += f"<p align='justify'>{intro2} corresponde imponerle a {nm} la pena de {condena_str}.</p>"
 
         next_section = 2
 
         if self.var_decomiso_option.currentText() == "Sí":
-            # 1) tomo el HTML completo (o el default)
-            html_decomiso = self.var_decomiso_text.property("html") or self.TEXTO_DECOMISO_DEFECTO
-            # 2) lo incrusto directamente en la plantilla (preserva <b>, <i>…)
-            plantilla += (
-                f"<p align='justify'><b>{numero_romano(next_section)}. Decomiso:</b> {html_decomiso}</p>"
+            html_decomiso = (
+                self.var_decomiso_text.property("html") or self.TEXTO_DECOMISO_DEFECTO
             )
+            html_decomiso = f'<a href="decomiso" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_decomiso}</a>'
+            plantilla += f"<p align='justify'><b>{numero_romano(next_section)}. Decomiso:</b> {html_decomiso}</p>"
             next_section += 1
 
         # Honorarios
@@ -3199,14 +3411,20 @@ class SentenciaWidget(QWidget):
             next_section += 1
 
         if self.var_restriccion_option.currentText() == "Sí":
-            html_restriccion = self.var_restriccion_text.property("html") or self.TEXTO_RESTRICCION_DEFECTO
-            plantilla += (
-                f"<p align='justify'><b>{numero_romano(next_section)}. Restricción de contacto y acercamiento:</b> {html_restriccion}</p>"
+            html_restriccion = (
+                self.var_restriccion_text.property("html")
+                or self.TEXTO_RESTRICCION_DEFECTO
             )
+            html_restriccion = f'<a href="restriccion" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_restriccion}</a>'
+            plantilla += f"<p align='justify'><b>{numero_romano(next_section)}. Restricción de contacto y acercamiento:</b> {html_restriccion}</p>"
             next_section += 1
 
         caso_vf_lower = self.var_caso_vf.currentText().lower()
-        if caso_vf_lower in ("violencia de género", "violencia de género doméstica", "violencia familiar"):
+        if caso_vf_lower in (
+            "violencia de género",
+            "violencia de género doméstica",
+            "violencia familiar",
+        ):
             extra_ley = " y por el art. 28 de la Ley provincial 9283"
         else:
             extra_ley = ""
@@ -3246,8 +3464,8 @@ class SentenciaWidget(QWidget):
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if html_resuelvo:
+            html_resuelvo = f'<a href="resuelvo" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_resuelvo}</a>'
             plantilla += f"<p align='justify'>{html_resuelvo}</p>"
-
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
@@ -3261,8 +3479,10 @@ class SentenciaWidget(QWidget):
             self._highlight_diff(old_plain, new_plain)
         self._prev_plain = new_plain
 
-        QTimer.singleShot(0, lambda: self.texto_plantilla.verticalScrollBar().setValue(pos))
-    
+        QTimer.singleShot(
+            0, lambda: self.texto_plantilla.verticalScrollBar().setValue(pos)
+        )
+
     def _sync_imp(self, idx: int, key: str, value: str):
         while len(self.data.imputados) <= idx:
             self.data.imputados.append({})
@@ -3271,6 +3491,7 @@ class SentenciaWidget(QWidget):
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+
 def confirm_and_quit(widget) -> None:
     """Muestra un QMessageBox; si el usuario acepta, cierra TODA la app."""
     ans = QMessageBox.question(
@@ -3278,7 +3499,7 @@ def confirm_and_quit(widget) -> None:
         "Cerrar la aplicación",
         "¿Está seguro de que desea salir?\nSe cerrarán todas las ventanas.",
         QMessageBox.Yes | QMessageBox.No,
-        QMessageBox.No
+        QMessageBox.No,
     )
     if ans == QMessageBox.Yes:
         QApplication.quit()
@@ -3287,9 +3508,10 @@ def confirm_and_quit(widget) -> None:
 if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication
     import sys
+
     app = QApplication(sys.argv)
-    data = CausaData()                # instancia propia de prueba
+    data = CausaData()  # instancia propia de prueba
     w = SentenciaWidget(data)
     w.resize(1300, 700)
     w.show()
-    sys.exit(app.exec()) 
+    sys.exit(app.exec())
