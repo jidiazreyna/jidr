@@ -1720,13 +1720,15 @@ class SentenciaWidget(QWidget):
         extra_layout.addWidget(lbl_restr, row, 0)
         extra_layout.addWidget(self.var_restriccion_option, row, 1)
         row += 1
+
+    def generar_docx_con_html(self):
         """Genera un DOCX respetando <p>, <b> e <i> usando un parser ligero."""
         from html import unescape
         from html.parser import HTMLParser
         from docx import Document
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         from docx.shared import Pt
-        from PySide6.QtWidgets import QFileDialog
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
 
         # 1) HTML en el mismo formato que usa "Copiar sentencia"
         basic_html = self.texto_plantilla.toHtml()
@@ -1737,19 +1739,13 @@ class SentenciaWidget(QWidget):
         raw_html = _sanitize_html(basic_html)
         # ───── PARCHE: asegurar apertura de <p> ─────
         if not re.match(r"\s*<p\b", raw_html, flags=re.I):
-            # Busco el primer cierre </p>.  Si existe, corto ahí.
             m = re.search(r"</p>", raw_html, flags=re.I)
             if m:
-                head = raw_html[: m.start()]  # texto hasta </p>
-                tail = raw_html[m.start() :]  # desde </p> inclusive
+                head = raw_html[: m.start()]
+                tail = raw_html[m.start() :]
                 raw_html = f'<p align="justify">{head}</p>{tail}'
             else:
-                # No hay ningún </p>: lo encierro todo
                 raw_html = f'<p align="justify">{raw_html}</p>'
-        # ─── DEBUG 1 ───
-        print("=== RAW_HTML (primeros 400) ===")
-        print(raw_html[:400])
-        print("================================")
 
         class Parser(HTMLParser):
             def __init__(self):
@@ -1762,7 +1758,7 @@ class SentenciaWidget(QWidget):
                 t = tag.lower()
                 if t == "p":
                     if self._in_p:
-                        self.paragraphs.append(self._current)  # guarda el que estaba
+                        self.paragraphs.append(self._current)
                     self._in_p = True
                     self._current = []
                 elif t in ("b", "i") and self._in_p:
@@ -1783,17 +1779,10 @@ class SentenciaWidget(QWidget):
 
         parser = Parser()
         parser.feed(raw_html)
-        # ─── DEBUG 2 ───
-        print("Cantidad de párrafos:", len(parser.paragraphs))
-        for i, par in enumerate(parser.paragraphs[:3]):  # miramos los primeros 3
-            print(
-                f"Párrafo {i}:",
-                "".join(t[1] if t[0] == "text" else f"<{t[0]}…>" for t in par),
-            )
         paragraphs = parser.paragraphs or [[("text", raw_html)]]
 
         document = Document()
-        document._body.clear_content()  # eliminamos párrafo inicial vacío
+        document._body.clear_content()
 
         for tokens in paragraphs:
             p = document.add_paragraph()
