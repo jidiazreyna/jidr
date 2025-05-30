@@ -1158,6 +1158,45 @@ class SentenciaWidget(QWidget):
             )
         )
 
+
+    def abrir_ventana_antecedentes(self, idx):
+        """Editor rico para antecedentes penales del imputado #idx."""
+        qle = self.imputados[idx]["antecedentes"]
+        html_inicial = qle.property("html") or qle.text()
+        self._rich_text_dialog(
+            f"Editar antecedentes – imputado #{idx+1}",
+            html_inicial,
+            lambda h: (
+                self._guardar_html_lineedit(qle, h),
+                self.actualizar_plantilla(),
+            )
+        )
+
+    def abrir_ventana_confesion(self, idx):
+        """Editor rico para la confesión del imputado #idx."""
+        qle = self.imputados[idx]["confesion"]
+        html_inicial = qle.property("html") or qle.text()
+        self._rich_text_dialog(
+            f"Editar confesión – imputado #{idx+1}",
+            html_inicial,
+            lambda h: (
+                self._guardar_html_lineedit(qle, h),
+                self.actualizar_plantilla(),
+            )
+        )
+
+    def abrir_ventana_ultima_palabra(self, idx):
+        """Editor rico para la última palabra del imputado #idx."""
+        qle = self.imputados[idx]["ultima"]
+        html_inicial = qle.property("html") or qle.text()
+        self._rich_text_dialog(
+            f"Editar última palabra – imputado #{idx+1}",
+            html_inicial,
+            lambda h: (
+                self._guardar_html_lineedit(qle, h),
+                self.actualizar_plantilla(),
+            )
+        )
     def abrir_ventana_decomiso(self):
         self._rich_text_dialog(
             "Editar texto de Decomiso",
@@ -1840,18 +1879,26 @@ class SentenciaWidget(QWidget):
             layout.addWidget(rb_ant_si, 9, 2)
             lbl_ant_text = QLabel("Antecedentes:")
             le_ant = QLineEdit()
-            le_ant.setEnabled(False)
-            rb_ant_si.toggled.connect(lambda checked, w=le_ant: w.setEnabled(checked))
+            btn_ant = QPushButton("Editar antecedentes")
+            btn_ant.setEnabled(False)
+            rb_ant_si.toggled.connect(lambda checked, w=le_ant, b=btn_ant: (w.setEnabled(checked), b.setEnabled(checked)))
+            btn_ant.clicked.connect(partial(self.abrir_ventana_antecedentes, idx-1))
             layout.addWidget(lbl_ant_text, 10, 0)
-            layout.addWidget(le_ant, 10, 1, 1, 3)
+            layout.addWidget(btn_ant, 10, 1, 1, 3)
+
             lbl_confesion = QLabel("Confesión:")
             le_confesion = QLineEdit()
+            btn_confesion = QPushButton("Editar confesión")
+            btn_confesion.clicked.connect(partial(self.abrir_ventana_confesion, idx-1))
             layout.addWidget(lbl_confesion, 11, 0)
-            layout.addWidget(le_confesion, 11, 1, 1, 3)
+            layout.addWidget(btn_confesion, 11, 1, 1, 3)
+
             lbl_ultima = QLabel("Última palabra:")
             le_ultima = QLineEdit()
+            btn_ultima = QPushButton("Editar última palabra")
+            btn_ultima.clicked.connect(partial(self.abrir_ventana_ultima_palabra, idx-1))
             layout.addWidget(lbl_ultima, 12, 0)
-            layout.addWidget(le_ultima, 12, 1, 1, 3)
+            layout.addWidget(btn_ultima, 12, 1, 1, 3)
             lbl_pautas = QLabel("Pautas de mensuración:")
             le_pautas = QLineEdit()
             btn_pautas = QPushButton("Añadir pautas de mensuración")
