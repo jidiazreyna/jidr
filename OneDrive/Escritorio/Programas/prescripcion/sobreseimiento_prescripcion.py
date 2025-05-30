@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import sys, re, datetime
 from typing import List, Dict
+from collections import UserDict
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -69,19 +70,29 @@ def fecha_hoy_letras()->str:
     hoy = datetime.date.today(); dia = _num_letras(hoy.day); mes = MESES[hoy.month-1]
     return f"{dia} de {mes} de {hoy.year}"
 
-TEMPLATE = """<p align='justify'>Córdoba, {fecha_letras}.</p>
+class SafeDict(UserDict):
+    """Dict que devuelve el marcador sin reemplazar ante claves faltantes."""
+    def __missing__(self, key):
+        return "{" + key + "}"
+
+TEMPLATE = """
+<p align='justify'>Córdoba, {fecha_letras}.</p>
 <p align='justify'>VISTA: la presente causa caratulada {caratula}, venida a {este_esta} {tribunal} a los efectos de resolver la situación procesal de {nombre_apellido}, {datos_personales}</p>
-<p align='justify'>DE LA QUE RESULTA:</p>
-<p align='justify'>Que {imputado_articulo} {nombre_apellido} se {le_les} atribuye {hechos_label}.</p>
-<p align='justify'><b>IMPUTADOS:</b></p>
-{imputados_html}
-<p align='justify'><b>HECHOS:</b></p>
+<p align='justify'>DE LA QUE RESULTA: Que {imputado_articulo} {nombre_apellido} se {le_les} atribuye {hechos_label}:</p>
 {hechos_html}
 <p align='justify'><b>Y CONSIDERANDO:</b></p>
-<p align='justify'>I) Durante la instrucción se colectaron los siguientes elementos probatorios: {prueba}</p>
-<p align='justify'>II) El fiscal {fiscal} requiere el sobreseimiento total por prescripción… (demo).</p>
-<p align='justify'><b>RESUELVO:</b></p>
-<p align='justify'>I. Sobreseer totalmente a {nombre_apellido}…</p>"""
+<p align='justify'>I. Que durante la instrucción se colectaron los siguientes elementos probatorios: {prueba}</p>
+<p align='justify'>II. Que {fiscal_titulo} {fiscal} requiere el sobreseimiento {tipo_sobreseimiento} en la presente causa respecto de {nombre_apellido}, por {hechos_mencionados} supra, {encuadrado_bajo} bajo la calificación legal de {delitos}, en virtud de lo dispuesto por los arts. 348 y 350 inc. 4º del CPP, en función del art. 59 inc. 3º del CP, brindando los siguientes argumentos: {argumentos_fiscal}</p>
+<p align='justify'><b>III. Conclusiones</b></p>
+<p align='justify'>Analizada la cuestión traída a estudio, se advierte que {hechos_atribuidos} a {nombre_apellido} {encuadra_n} efectivamente bajo la calificación legal de {delitos}, cuya pena máxima conminada en abstracto es de {penamaxima} de prisión. En este sentido, cabe aclarar que a los fines de computar el término para la prescripción del hecho imputado a {nombre_apellido} en los presentes autos se debe tener en cuenta {interrupcion}, conforme surge de la planilla prontuarial, del Registro Nacional de Reincidencia y del Sistema de Administración de Causas. En efecto, {fundamentacion}</p>
+<p align='justify'>Así, teniendo en cuenta los términos referidos, entiendo que corresponde desvincular de la presente causa al imputado {nombre_apellido} por la causal de procedencia descripta en el art. 350 inc. 4º del CPP. Ello así, porque, tal como lo manifestó {fiscal_articulo}, a la fecha, ha transcurrido con exceso el término establecido por el art. 62 inc. 2° del CP ({penamaxima} en este caso), el que desde la fecha {fechas_prescripcion} no fue interrumpido por la comisión de nuevos delitos, conforme surge de la planilla prontuarial y del informe del Registro Nacional de Reincidencia incorporados digitalmente, y no procede ninguna de las causales contempladas por el art. 67 del CP, motivo por el cual ha de tenerse a la prescripción como causal de previo y especial pronunciamiento. Así lo establece el alto tribunal de esta provincia: “…Esta Sala, compartiendo la posición ya asumida por otra integración y por mayoría (A. nº 76, 29/6/93, &quot;Cappa&quot;; A. nº 60, 14/6/94, &quot;Vivian&quot;), ha sostenido que habida cuenta de la naturaleza sustancial de las distintas causales de sobreseimiento, las extintivas de la acción deben ser de previa consideración (T.S.J., Sala Penal, A. n° 26, 19/2/99, &quot;Rivarola&quot;; &quot;Pérez&quot;, cit.). Por ello, la sola presencia de una causal extintiva de la acción -en el caso, la prescripción- debe ser estimada independientemente cualquiera sea la oportunidad de su producción y de su conocimiento por el Tribunal, toda vez que -en términos procesales- significa un impedimento para continuar ejerciendo los poderes de acción y de jurisdicción en procura de un pronunciamiento sobre el fondo (TSJ, Sala Penal, “CARUNCHIO, Oscar Rubén p.s.a. Homicidio Culposo -Recurso de Casación-” -Expte. &quot;C&quot;, 36/03-, S. n.° 104 de fecha 16/9/2005).</p>
+<p align='justify'>IV. En consecuencia, y de conformidad a lo normado por los arts. 59 inc. 3° y 62 inc. 2° del CP y 350 del CPP, corresponde declarar prescripta la pretensión punitiva penal emergente {hechos_configurativos} de {delitos} que se le {atribuia_n} a {nombre_apellido}.</p>
+<p align='justify'>V. Finalmente, deberá oficiarse a la Policía de la Provincia de Córdoba y al Registro Nacional de Reincidencia a fin de informar lo aquí resuelto.</p>
+<p align='justify'>Por lo expresado y disposiciones legales citadas; <b>RESUELVO:</b></p>
+<p align='justify'>I. Sobreseer {sobreseimiento_tipo}, respecto {hecho_plural} de {fechas} {fechasdeloshechos}, a {nombre_apellido}, de condiciones personales ya relacionadas, por {hecho_calificado} como {delitos}, de conformidad con lo establecido por los arts. 348 y 350 inc. 4º del CPP, en función de los arts. 59 inc. 3º, 62 inc. 2º y 67 del CP.</p>
+<p align='justify'>II. Ofíciese a la Policía de la Provincia de Córdoba y al Registro Nacional de Reincidencia, a sus efectos.</p>
+<p align='justify'>PROTOCOLÍCESE Y NOTIFÍQUESE.</p>
+"""
 
 def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hechos: List[str], **campos) -> str:
     auto = _pronombres_imputados(sexos_imputados)
@@ -93,10 +104,16 @@ def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hecho
         imp_lines.append(f"{idx}. {art} {nom}")
     hechos_lines = [f"{i+1}. {txt}" for i, txt in enumerate(hechos)]
 
-    auto["imputados_html"] = "\n".join(f"<p align='justify'>{l}</p>" for l in imp_lines) or "[imputados]"
-    auto["hechos_html"] = "\n".join(f"<p align='justify'><i>{h}</i></p>" for h in hechos_lines) or "[hechos]"
+    auto["imputados_html"] = "\n".join(
+        f"<p align='justify'>{l}</p>" for l in imp_lines
+    ) or "[imputados]"
+    auto["hechos_html"] = "\n".join(
+        f"<p align='justify'><i>{h}</i></p>" for h in hechos_lines
+    ) or "[hechos]"
 
-    return TEMPLATE.format(**auto, **campos)
+    data = SafeDict(auto)
+    data.update(campos)
+    return TEMPLATE.format_map(data)
 
 # ───────────────────────────────────────────────────────────── Widgets ──
 class ImputadoWidget(QWidget):
