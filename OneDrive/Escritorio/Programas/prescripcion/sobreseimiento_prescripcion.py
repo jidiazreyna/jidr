@@ -17,11 +17,11 @@ Ejecución
 """
 from __future__ import annotations
 
-import sys, re, datetime
+import sys, re
 from typing import List, Dict
 from collections import UserDict
 from pathlib import Path
-
+from datetime import datetime
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -56,19 +56,62 @@ def _pronombres_imputados(sexos: List[str]) -> Dict[str, str]:
         "acusado_label": acusado,
     }
 
-# Fecha en letras
-MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
-NUMS_UNI = ("cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve")
-DECENAS = ("treinta","cuarenta")
+UNIDADES = (
+    'cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco',
+    'seis', 'siete', 'ocho', 'nueve', 'diez', 'once',
+    'doce', 'trece', 'catorce', 'quince', 'dieciséis',
+    'diecisiete', 'dieciocho', 'diecinueve', 'veinte',
+    'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro',
+    'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho',
+    'veintinueve'
+)
+DECENAS = (
+    'treinta', 'cuarenta', 'cincuenta', 'sesenta',
+    'setenta', 'ochenta', 'noventa'
+)
+CENTENAS = (
+    'cien', 'doscientos', 'trescientos', 'cuatrocientos',
+    'quinientos', 'seiscientos', 'setecientos', 'ochocientos',
+    'novecientos'
+)
 
-def _num_letras(n:int)->str:
-    if n<30: return NUMS_UNI[n]
-    dec, uni = divmod(n,10); base = DECENAS[dec-3]
-    return base if uni==0 else f"{base} y {NUMS_UNI[uni]}"
+def numero_a_letras(num: int) -> str:
+    if num < 0:
+        return "menos " + numero_a_letras(abs(num))
+    if num <= 29:
+        return UNIDADES[num]
+    if num < 100:
+        dec = (num // 10) - 3
+        uni = num % 10
+        letra_decena = DECENAS[dec]
+        return letra_decena if uni == 0 else f"{letra_decena} y {UNIDADES[uni]}"
+    if num < 1000:
+        cent = (num // 100) - 1
+        resto = num % 100
+        if num == 100:
+            return "cien"
+        return CENTENAS[cent] if resto == 0 else f"{CENTENAS[cent]} {numero_a_letras(resto)}"
+    if num < 10000:
+        mil = num // 1000
+        resto = num % 1000
+        prefix = "mil" if mil == 1 else f"{numero_a_letras(mil)} mil"
+        return prefix if resto == 0 else f"{prefix} {numero_a_letras(resto)}"
+    return str(num)
 
-def fecha_hoy_letras()->str:
-    hoy = datetime.date.today(); dia = _num_letras(hoy.day); mes = MESES[hoy.month-1]
-    return f"{dia} de {mes} de {hoy.year}"
+def obtener_fecha_en_letras():
+    fecha_actual = datetime.now()
+    dia = fecha_actual.day
+    mes_numero = fecha_actual.month
+    anio = fecha_actual.year
+    dia_letras = numero_a_letras(dia)
+    anio_letras = numero_a_letras(anio)
+    meses = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+        5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+        9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
+    mes_str = meses.get(mes_numero, '')
+    return f"{dia_letras} de {mes_str} de {anio_letras}"
 
 class SafeDict(UserDict):
     """Dict que devuelve el marcador sin reemplazar ante claves faltantes."""
@@ -199,7 +242,7 @@ class PrescripcionGUI(QWidget):
         nombres = [w.nombre() for w in self.imputados_widgets]
         hechos = [w.texto() for w in self.hechos_widgets]
         campos={
-            "fecha_letras":fecha_hoy_letras(),
+            "fecha_letras":obtener_fecha_en_letras(),
             "caratula": self.ed_caratula.text().strip() or "[carátula]",
             "este_esta": "este" if self.cb_tipo.currentText()=="Juzgado" else "esta",
             "tribunal": self.ed_tribunal.text().strip() or "[tribunal]",
