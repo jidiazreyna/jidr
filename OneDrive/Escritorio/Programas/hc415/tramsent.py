@@ -305,10 +305,26 @@ def format_list_with_semicolons(items):
     return "; ".join(items[:-1]) + f"; y {items[-1]}"
 
 def strip_trailing_single_dot(text: str) -> str:
-    """Remove a single trailing period without touching ellipses."""
+    """Return *text* without unneeded dots at the end.
+
+    Elimina automáticamente la secuencia ``..`` que puede aparecer cuando el
+    usuario escribe un punto final y la plantilla ya preveía otro.
+    Conserva los puntos suspensivos ``...`` o el carácter ``…``.
+    """
+
     t = text.rstrip()
-    if t.endswith('.') and not t.endswith('..') and not t.endswith('...') and not t.endswith('…'):
+
+    if t.endswith("...") or t.endswith("…"):
+        # Respeta puntos suspensivos
+        return t
+
+    if t.endswith(".."):
+        # Queda un único punto
         return t[:-1]
+
+    if t.endswith('.'):
+        return t[:-1]
+
     return t
 
 def numero_romano(n: int) -> str:
