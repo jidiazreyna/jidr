@@ -261,8 +261,8 @@ def _sanitize_html(html_raw: str) -> str:
     # f) compacta espacios
     html_raw = re.sub(r'\s+', ' ', html_raw).strip()
 
-    # g) si quedó un único <p> que envuelve todo, lo quitamos
-    if html_raw.lower().startswith('<p') and html_raw.lower().endswith('</p>'):
+    # g) si el texto completo está envuelto en un único <p>…</p>, lo quitamos
+    if re.fullmatch(r'<p[^>]*>.*?</p>', html_raw, flags=re.I | re.S):
         html_raw = re.sub(r'^<p[^>]*>|</p>$', '', html_raw, flags=re.I).strip()
 
     return html.unescape(html_raw)
