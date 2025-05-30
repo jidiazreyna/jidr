@@ -314,18 +314,27 @@ def strip_trailing_single_dot(text: str) -> str:
 
     t = text.rstrip()
 
-    if t.endswith("...") or t.endswith("…"):
-        # Respeta puntos suspensivos
+    if t.endswith("…"):
+        # Respeta el carácter de puntos suspensivos
         return t
 
-    if t.endswith(".."):
-        # Queda un único punto
+    # Detectar cuántos puntos hay al final
+    m = re.search(r"\.*$", t)
+    dots = m.group(0) if m else ""
+
+    if not dots:
+        return t
+
+    if dots == "...":
+        # Justo puntos suspensivos
+        return t
+
+    if len(dots) > 3:
+        # Teníamos "..." + punto(s) adicional(es): quitamos sólo uno
         return t[:-1]
 
-    if t.endswith('.'):
-        return t[:-1]
-
-    return t
+    # Casos "." o ".." => eliminamos un punto
+    return t[:-1]
 
 def numero_romano(n: int) -> str:
     romanos = [
