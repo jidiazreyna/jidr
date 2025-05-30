@@ -71,18 +71,32 @@ def fecha_hoy_letras()->str:
 
 TEMPLATE = """<p align='justify'>Córdoba, {fecha_letras}.</p>
 <p align='justify'>VISTA: la presente causa caratulada {caratula}, venida a {este_esta} {tribunal} a los efectos de resolver la situación procesal de {nombre_apellido}, {datos_personales}</p>
-<p align='justify'>DE LA QUE RESULTA: Que {imputado_articulo} {nombre_apellido} se {le_les} atribuye {hechos_label}:</p>
-<p align='justify'><i>{hecho}</i></p>
+<p align='justify'>DE LA QUE RESULTA:</p>
+<p align='justify'>Que {imputado_articulo} {nombre_apellido} se {le_les} atribuye {hechos_label}.</p>
+<p align='justify'><b>IMPUTADOS:</b></p>
+{imputados_html}
+<p align='justify'><b>HECHOS:</b></p>
+{hechos_html}
 <p align='justify'><b>Y CONSIDERANDO:</b></p>
 <p align='justify'>I) Durante la instrucción se colectaron los siguientes elementos probatorios: {prueba}</p>
 <p align='justify'>II) El fiscal {fiscal} requiere el sobreseimiento total por prescripción… (demo).</p>
 <p align='justify'><b>RESUELVO:</b></p>
 <p align='justify'>I. Sobreseer totalmente a {nombre_apellido}…</p>"""
 
-def render_prescripcion(*,sexos_imputados:List[str],num_hechos:int,**campos)->str:
+def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hechos: List[str], **campos) -> str:
     auto = _pronombres_imputados(sexos_imputados)
-    auto["hechos_label"] = "el siguiente hecho" if num_hechos==1 else "los siguientes hechos"
-    return TEMPLATE.format(**auto,**campos)
+    auto["hechos_label"] = "el siguiente hecho" if len(hechos) == 1 else "los siguientes hechos"
+
+    imp_lines = []
+    for idx, (nom, sx) in enumerate(zip(nombres, sexos_imputados), start=1):
+        art = "el imputado" if sx == "M" else "la imputada"
+        imp_lines.append(f"{idx}. {art} {nom}")
+    hechos_lines = [f"{i+1}. {txt}" for i, txt in enumerate(hechos)]
+
+    auto["imputados_html"] = "\n".join(f"<p align='justify'>{l}</p>" for l in imp_lines) or "[imputados]"
+    auto["hechos_html"] = "\n".join(f"<p align='justify'><i>{h}</i></p>" for h in hechos_lines) or "[hechos]"
+
+    return TEMPLATE.format(**auto, **campos)
 
 # ───────────────────────────────────────────────────────────── Widgets ──
 class ImputadoWidget(QWidget):
@@ -164,20 +178,25 @@ class PrescripcionGUI(QWidget):
         self.update_preview()
 
     def update_preview(self):
-        sexos=[w.sexo() for w in self.imputados_widgets]
-        hechos_desc="\n".join(f"{i+1}. {w.texto()}" for i,w in enumerate(self.hechos_widgets))
+        sexos = [w.sexo() for w in self.imputados_widgets]
+        nombres = [w.nombre() for w in self.imputados_widgets]
+        hechos = [w.texto() for w in self.hechos_widgets]
         campos={
             "fecha_letras":fecha_hoy_letras(),
             "caratula": self.ed_caratula.text().strip() or "[carátula]",
             "este_esta": "este" if self.cb_tipo.currentText()=="Juzgado" else "esta",
             "tribunal": self.ed_tribunal.text().strip() or "[tribunal]",
-            "nombre_apellido": ", ".join(w.nombre() for w in self.imputados_widgets),
+            "nombre_apellido": ", ".join(nombres),
             "datos_personales": "[datos]",
-            "hecho": hechos_desc or "[hechos]",
             "prueba": self.ed_prueba.text().strip() or "[prueba]",
             "fiscal": self.ed_fiscal.text().strip() or "[fiscal]",
         }
-        html=render_prescripcion(sexos_imputados=sexos,num_hechos=self.spin_hec.value(),**campos)
+        html = render_prescripcion(
+            sexos_imputados=sexos,
+            nombres=nombres,
+            hechos=hechos,
+            **campos,
+        )
         self.preview.setHtml(html)
 
     def copy_clip(self):
