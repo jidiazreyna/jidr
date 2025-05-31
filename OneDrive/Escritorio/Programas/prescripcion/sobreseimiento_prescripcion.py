@@ -167,10 +167,17 @@ def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hecho
     if len(hechos) == 1:
         hechos_html = f"<p align='justify'><i>{hechos[0]}</i></p>"
     else:
-        hechos_html = "\n".join(
-            f"<p align='justify'><b>{ORDINALES_HECHOS[i] if i < len(ORDINALES_HECHOS) else f'{i+1}°'} hecho:</b> <i>{txt}</i></p>"
-            for i, txt in enumerate(hechos)
-        )
+        lines = []
+        for i, txt in enumerate(hechos):
+            ordinal = (
+                ORDINALES_HECHOS[i]
+                if i < len(ORDINALES_HECHOS)
+                else f"{i+1}°"
+            )
+            lines.append(
+                f"<p align='justify'><b>{ordinal} hecho:</b> <i>{txt}</i></p>"
+            )
+        hechos_html = "\n".join(lines)
 
     auto["imputados_html"] = "\n".join(
         f"<p align='justify'>{l}</p>" for l in imp_lines
