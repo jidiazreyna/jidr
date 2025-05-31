@@ -2537,7 +2537,7 @@ class SentenciaWidget(QWidget):
         primer_parrafo = (
             f"En la ciudad de {loc_anchor}, el {fecha_anchor}, se dan a conocer "
             f"los fundamentos de la sentencia dictada en la causa <b>{caratula_anchor}</b>, "
-            f"juzgada por {art_tribunal} {tribunal_anchor}, en la sala {sala_anchor} "
+            f"juzgada por {art_tribunal} {tribunal_anchor}, en la {sala_anchor} "
             f"a cargo {articulo_cargo} {cargo_anchor} {juez_anchor}."
         )
 
