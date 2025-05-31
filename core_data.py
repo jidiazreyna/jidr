@@ -77,7 +77,12 @@ class CausaData:
         """Lee TODOS los widgets de MainWindow y actualiza este objeto."""
         # Generales
         self.caratula        = getattr(win, "entry_caratula",     None).text() if hasattr(win, "entry_caratula") else self.caratula
-        self.articulo        = getattr(win, "combo_articulo",     None).currentText() if hasattr(win, "combo_articulo") else self.articulo
+        if hasattr(win, "combo_articulo"):
+            self.articulo = win.combo_articulo.currentText()
+            # Sincronizamos el cargo del juez con el tipo de tribunal
+            self.juez_cargo = "vocal" if self.articulo.startswith("Cámara") else "juez"
+        else:
+            self.articulo = self.articulo
         self.tribunal        = getattr(win, "entry_tribunal",     None).currentText() if hasattr(win, "entry_tribunal") else self.tribunal
         self.sala            = getattr(win, "combo_sala",         None).currentText() if hasattr(win, "combo_sala") else self.sala
         self.fecha_audiencia = getattr(win, "entry_fecha",        None).text() if hasattr(win, "entry_fecha") else self.fecha_audiencia
