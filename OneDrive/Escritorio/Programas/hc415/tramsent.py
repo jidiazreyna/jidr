@@ -31,18 +31,16 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QSizePolicy,
     QToolButton,
+    QInputDialog,
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QIcon, QTextCharFormat, QAction, QTextDocument
 import ctypes
-from PySide6.QtCore import Qt, Signal
 from core_data import CausaData
-from PySide6.QtWidgets import QDialog, QVBoxLayout
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QMessageBox
 from widgets import NoWheelComboBox, NoWheelSpinBox
 import html
 from html import unescape
-from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument
 
 
 myappid = "com.miempresa.miproducto.1.0"  # Identificador único
@@ -458,6 +456,17 @@ def numero_romano(n: int) -> str:
         "20",
     ]
     return romanos[n - 1] if 1 <= n <= len(romanos) else str(n)
+
+
+def anchor(texto, clave, placeholder=None):
+    """Genera una ancla amarilla editable para la plantilla."""
+    if not texto.strip():
+        texto = placeholder or f"[{clave}]"
+    return (
+        f'<a href="{clave}" '
+        f'style="background-color:#ffffcc;color:black;text-decoration:none;">'
+        f"{html.escape(texto)}</a>"
+    )
 
 
 ORDINALES_HECHOS = [
@@ -970,6 +979,28 @@ class SentenciaWidget(QWidget):
         btn_box.rejected.connect(dlg.reject)
         dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
+
+    def _edit_combo_box(self, combo: QComboBox, title: str) -> bool:
+        """Diálogo sencillo para editar un QComboBox mediante una lista."""
+        dlg = QDialog(self)
+        dlg.setWindowTitle(title)
+        lay = QVBoxLayout(dlg)
+
+        cb = QComboBox(dlg)
+        for i in range(combo.count()):
+            cb.addItem(combo.itemText(i))
+        cb.setCurrentText(combo.currentText())
+        lay.addWidget(cb)
+
+        btns = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        lay.addWidget(btns)
+        btns.accepted.connect(dlg.accept)
+        btns.rejected.connect(dlg.reject)
+
+        if dlg.exec():
+            combo.setCurrentText(cb.currentText())
+            return True
+        return False
 
     def _rich_text_dialog(self, title: str, initial_html: str, on_accept_callback):
         """
@@ -1484,6 +1515,7 @@ class SentenciaWidget(QWidget):
         self.left_container.setMinimumWidth(450)
 
         main_layout.addWidget(self.left_scroll, 2)
+        self.left_scroll.setVisible(False)
 
         # ------------------------------------------------------------------
         self.btn_generar_docx = QPushButton("Generar Word")
@@ -1875,20 +1907,86 @@ class SentenciaWidget(QWidget):
 
     def _on_anchor_clicked(self, url):
         href = url.toString()
-        if href == "alegato_fiscal":
-            self.abrir_ventana_alegato_fiscal()
-        elif href == "alegato_defensa":
-            self.abrir_ventana_alegato_defensa()
-        elif href == "prueba":
-            self.abrir_ventana_prueba()
-        elif href == "pruebas_importantes":
-            self.abrir_ventana_pruebas_importantes()
-        elif href == "decomiso":
-            self.abrir_ventana_decomiso()
-        elif href == "restriccion":
-            self.abrir_ventana_restriccion()
-        elif href == "resuelvo":
-            self.abrir_ventana_resuelvo()
+
+        rich_map = {
+            "alegato_fiscal": self.abrir_ventana_alegato_fiscal,
+            "alegato_defensa": self.abrir_ventana_alegato_defensa,
+            "prueba": self.abrir_ventana_prueba,
+            "pruebas_importantes": self.abrir_ventana_pruebas_importantes,
+            "decomiso": self.abrir_ventana_decomiso,
+            "restriccion": self.abrir_ventana_restriccion,
+            "resuelvo": self.abrir_ventana_resuelvo,
+        }
+        if href in rich_map:
+            rich_map[href]()
+            return
+
+        edit_map = {
+            "edit_localidad": (self.var_localidad.text, self.var_localidad.setText, "Localidad"),
+            "edit_fecha_audiencia": (self.var_dia_audiencia.text, self.var_dia_audiencia.setText, "Fecha de audiencia"),
+            "edit_caratula": (self.var_caratula.text, self.var_caratula.setText, "Carátula"),
+            "edit_tribunal": (self.var_tribunal.currentText, self.var_tribunal.setCurrentText, "Tribunal"),
+            "edit_sala": (self.var_sala.currentText, self.var_sala.setCurrentText, "Sala"),
+            "edit_juez": (self.var_juez.text, self.var_juez.setText, "Juez/jueza"),
+            "edit_fiscal": (self.var_fiscal.text, self.var_fiscal.setText, "Fiscal"),
+        }
+
+        if href in edit_map:
+            getter, setter, prompt = edit_map[href]
+            if href in {"edit_tribunal", "edit_sala"}:
+                combo = self.var_tribunal if href == "edit_tribunal" else self.var_sala
+                if self._edit_combo_box(combo, prompt):
+                    self.actualizar_plantilla()
+                return
+            text, ok = QInputDialog.getText(self, prompt, prompt, text=getter())
+            if ok:
+                setter(text.strip())
+                self.actualizar_plantilla()
+            return
+
+        if href.startswith("edit_imp_"):
+            parts = href.split("_")
+            field = parts[2]
+            idx = int(parts[3])
+            if field == "datos":
+                self.abrir_ventana_datos(idx)
+                return
+            if field == "condiciones":
+                self.abrir_ventana_condiciones(idx)
+                return
+            if field == "pautas":
+                self.abrir_ventana_pautas(idx)
+                return
+            if field == "antecedentes":
+                self.abrir_ventana_antecedentes(idx)
+                return
+            if field == "confesion":
+                self.abrir_ventana_confesion(idx)
+                return
+            if field == "ultima":
+                self.abrir_ventana_ultima_palabra(idx)
+                return
+            le = self.imputados[idx].get(field)
+            if le:
+                text, ok = QInputDialog.getText(self, field.capitalize(), field.capitalize(), text=le.text())
+                if ok:
+                    le.setText(text.strip())
+                    self.actualizar_plantilla()
+            return
+
+        if href.startswith("edit_hecho_"):
+            parts = href.split("_")
+            field = parts[2]
+            idx = int(parts[3])
+            if field == "descripcion":
+                self.abrir_ventana_descripcion(idx)
+                return
+            le = self.hechos[idx].get(field)
+            if le:
+                text, ok = QInputDialog.getText(self, field.capitalize(), field.capitalize(), text=le.text())
+                if ok:
+                    le.setText(text.strip())
+                    self.actualizar_plantilla()
 
     def add_row(self, row, label_text, widget):
         lbl = QLabel(label_text)
@@ -2200,21 +2298,27 @@ class SentenciaWidget(QWidget):
         localidad = self.var_localidad.text().strip()
         if not localidad:
             localidad = "Córdoba"  # fallback
+        loc_anchor = anchor(localidad, "edit_localidad", "Localidad")
 
         # 2) Fecha en letras
         fecha_letras = self.var_dia_audiencia.text().strip()
+        fecha_anchor = anchor(fecha_letras, "edit_fecha_audiencia", "Fecha")
 
         # 3) Causa/caratula
         caratula = self.var_caratula.text().strip()
+        caratula_anchor = anchor(caratula, "edit_caratula", "Carátula")
 
         # 4) Tribunal
         tribunal = self.var_tribunal.currentText()
+        tribunal_anchor = anchor(tribunal, "edit_tribunal", "Tribunal")
 
         # 5) Sala
         sala = self.var_sala.currentText().strip()
+        sala_anchor = anchor(sala, "edit_sala", "Sala")
 
         # 6) Juez
         juez_nombre = self.var_juez.text().strip()
+        juez_anchor = anchor(juez_nombre, "edit_juez", "Juez")
         if self.rb_juez_m.isChecked():
             juez_intro = "del juez"
         else:
@@ -2230,6 +2334,7 @@ class SentenciaWidget(QWidget):
 
         # 7) Fiscal
         fiscal_nombre = self.var_fiscal.text().strip()
+        fiscal_anchor = anchor(fiscal_nombre, "edit_fiscal", "Fiscal")
         fiscal_articulo = "el" if self.rb_fiscal_m.isChecked() else "la"
 
         # 8) Imputados => para “el/la/las/los imputado/a/as/os”,
@@ -2283,7 +2388,8 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
-            names_list.append(nm)
+            nm_anchor = anchor(nm, f"edit_imp_nombre_{i}", "Nombre imputado")
+            names_list.append(nm_anchor)
         nombres_conj = format_list_for_sentence(names_list)
 
         #    Recopilar
@@ -2308,9 +2414,9 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
+            nm_anchor = anchor(nm, f"edit_imp_nombre_{i}", "Nombre imputado")
             d = (imp["datos"].property("html") or imp["datos"].text()).strip()
-            # Armamos => "<b>Nombre</b>, datospersonales"
-            comb = f"<b>{nm}</b>"
+            comb = f"<b>{nm_anchor}</b>"
             if d:
                 comb += f", {d}"
             datos_personales_list.append(comb)
@@ -2319,13 +2425,13 @@ class SentenciaWidget(QWidget):
         )
         art_tribunal = "el" if self.boton_cargo_juez.text().lower() == "juez" else "la"
         primer_parrafo = (
-            f"En la ciudad de {localidad}, el {fecha_letras}, se dan a conocer "
-            f"los fundamentos de la sentencia dictada en la causa <b>{caratula}</b>, "
-            f"juzgada por {art_tribunal} {tribunal}, en la sala {sala} a cargo {texto_juez}."
+            f"En la ciudad de {loc_anchor}, el {fecha_anchor}, se dan a conocer "
+            f"los fundamentos de la sentencia dictada en la causa <b>{caratula_anchor}</b>, "
+            f"juzgada por {art_tribunal} {tribunal_anchor}, en la sala {sala_anchor} a cargo {juez_anchor}."
         )
 
         segundo_parrafo = (
-            f"En el debate intervinieron {fiscal_articulo} {fiscal_nombre}, "
+            f"En el debate intervinieron {fiscal_articulo} {fiscal_anchor}, "
             f"y {imput_label} {nombres_conj}, {asistido_label} por {defensa_final}."
         )
 
@@ -2696,7 +2802,7 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
-            final_names_list.append(nm)
+            final_names_list.append(anchor(nm, f"edit_imp_nombre_{i}", "Nombre imputado"))
 
         for i, imp in enumerate(self.imputados):
             name_i = f"<b>{final_names_list[i]}</b>"
