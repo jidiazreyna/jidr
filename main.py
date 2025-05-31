@@ -720,9 +720,9 @@ class MainWindow(QMainWindow):
             le_fec = QLineEdit(); add_pair("Fecha de elevación:", le_fec)
 
             for w in [le_desc, le_aclar, le_ofi, le_auto, le_fec]:
-                w.textChanged.connect(self.update_template)
+                w.textChanged.connect(self.update)
             for w in [rb_j, rb_f]:
-                w.toggled.connect(self.update_template)
+                w.toggled.connect(self.update)
 
             self.tabs_hechos.addTab(tab, f"Hecho {i}")
             self.hechos_widgets.append({
