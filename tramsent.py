@@ -2888,10 +2888,10 @@ class SentenciaWidget(QWidget):
             conf_text = strip_trailing_single_dot(
                 self.imputados[0]["confesion"].text().strip()
             )
-            if conf_text:
-                plantilla += f" Ante ello, {nm} dijo: “{conf_text}”.</p>"
-            else:
-                plantilla += f" Ante ello, {nm} .</p>"
+            conf_text = anchor(
+                conf_text or "[confesión]", "edit_imp_confesion_0", "Confesión"
+            )
+            plantilla += f" Ante ello, {nm} dijo: “{conf_text}”.</p>"
         else:
             # Caso de varios imputados: se imprime una parte colectiva y luego las confesiones individuales.
             if all(s == "F" for s in sexos):
@@ -2914,14 +2914,16 @@ class SentenciaWidget(QWidget):
             for i, imp in enumerate(self.imputados):
                 nm = final_names_list[i]
                 conf_text = strip_trailing_single_dot(imp["confesion"].text().strip())
+                conf_text = anchor(
+                    conf_text or "[confesión]",
+                    f"edit_imp_confesion_{i}",
+                    "Confesión",
+                )
                 prefix = prefixes_cycle[i % len(prefixes_cycle)]
                 verb = verbs_cycle[i % len(verbs_cycle)]
-                if conf_text:
-                    plantilla += (
-                        f"<p align='justify'>{prefix} {nm} {verb}: “{conf_text}”.</p>"
-                    )
-                else:
-                    plantilla += f"<p align='justify'>{prefix} {nm} .</p>"
+                plantilla += (
+                    f"<p align='justify'>{prefix} {nm} {verb}: “{conf_text}”.</p>"
+                )
 
         # c) Aceptación
         if n_imp == 1:
@@ -3085,9 +3087,7 @@ class SentenciaWidget(QWidget):
         non_speakers_2 = []
 
         for i, imp in enumerate(self.imputados):
-            ultima_str = (
-                imp["ultima"].text().strip()
-            )  # <-- la "Última palabra" ingresada
+            ultima_str = imp["ultima"].text().strip()
             if ultima_str:
                 speakers_2.append((i, ultima_str))  # este imputado sí habló
             else:
@@ -3125,6 +3125,11 @@ class SentenciaWidget(QWidget):
             if total_speakers == 1 and not non_speakers_2:
                 idx_speaker, text_speaker = speakers_2[0]
                 text_speaker = strip_trailing_single_dot(text_speaker)
+                text_speaker = anchor(
+                    text_speaker or "[última palabra]",
+                    f"edit_imp_ultima_{idx_speaker}",
+                    "Última palabra",
+                )
                 nm = nombre(idx_speaker)
                 plantilla += (
                     f"<p align='justify'>Finalmente, al concederse la última palabra, "
@@ -3136,6 +3141,11 @@ class SentenciaWidget(QWidget):
                 # Imprimimos ordenadamente a cada uno de los que sí hablaron
                 for i, (idx_speaker, text_speaker) in enumerate(speakers_2):
                     text_speaker = strip_trailing_single_dot(text_speaker)
+                    text_speaker = anchor(
+                        text_speaker or "[última palabra]",
+                        f"edit_imp_ultima_{idx_speaker}",
+                        "Última palabra",
+                    )
                     nm = nombre(idx_speaker)
                     if i == 0:
                         # Primer orador
@@ -3145,7 +3155,9 @@ class SentenciaWidget(QWidget):
                         )
                     else:
                         # Siguientes oradores
-                        plantilla += f"<p align='justify'>Seguidamente, {nm} dijo: “{text_speaker}”.</p>"
+                        plantilla += (
+                            f"<p align='justify'>Seguidamente, {nm} dijo: “{text_speaker}”.</p>"
+                        )
 
                 # Ahora mencionamos a los que NO hablaron
                 if non_speakers_2:
@@ -3376,6 +3388,11 @@ class SentenciaWidget(QWidget):
             pautas_str = (
                 imp["pautas"].property("html") or imp["pautas"].text()
             ).strip()
+            pautas_str = anchor(
+                pautas_str or "[pautas]",
+                f"edit_imp_pautas_{i}",
+                "Pautas",
+            )
             intro = introductions[i % len(introductions)]
             verb = valuation_verbs[i % len(valuation_verbs)]
             if i == 0:
