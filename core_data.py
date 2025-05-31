@@ -42,6 +42,7 @@ class CausaData:
     juez_cargo: str = "juez"      # «juez» / «vocal»
 
     n_imputados: int = 1
+    num_hechos: int = 1
 
     # Datos auxiliares de sentencia (ya estaban)
     sujeto_eventual: str = ""
@@ -117,6 +118,22 @@ class CausaData:
                     )
                     for key, widget in w.items()
                 })
+
+        # Hechos
+        self.hechos.clear()
+        if hasattr(win, "hechos_widgets"):
+            self.num_hechos = win.spin_hechos.value()
+            for w in win.hechos_widgets:
+                self.hechos.append({
+                    "descripcion": w["descripcion"].property("html") or w["descripcion"].text(),
+                    "aclaraciones": w["aclaraciones"].text(),
+                    "oficina": w["oficina"].text(),
+                    "juzgado": w["rb_j"].isChecked(),
+                    "num_auto": w["num_auto"].text(),
+                    "fecha_elev": w["fecha_elev"].text(),
+                })
+        else:
+            self.num_hechos = len(self.hechos)
         # print("[DEBUG from_main] Modelo después:", self.imputados)
 
     def apply_to_main(self, win: "MainWindow") -> None:
@@ -158,6 +175,27 @@ class CausaData:
         win.combo_n.blockSignals(was_blocked)
         # reconstruir pestañas y volcar datos imputados
         win.rebuild_imputados()
+
+        # --- Hechos ---
+        if hasattr(win, "spin_hechos"):
+            win.spin_hechos.setValue(self.num_hechos or len(self.hechos) or 1)
+            win.rebuild_hechos()
+            for idx, datos in enumerate(self.hechos):
+                if idx >= len(win.hechos_widgets):
+                    break
+                w = win.hechos_widgets[idx]
+                w["descripcion"].setProperty("html", datos.get("descripcion", ""))
+                from PySide6.QtGui import QTextDocument
+                doc = QTextDocument(); doc.setHtml(datos.get("descripcion", ""))
+                w["descripcion"].setText(doc.toPlainText()[:200])
+                w["aclaraciones"].setText(datos.get("aclaraciones", ""))
+                w["oficina"].setText(datos.get("oficina", ""))
+                if datos.get("juzgado", True):
+                    w["rb_j"].setChecked(True)
+                else:
+                    w["rb_f"].setChecked(True)
+                w["num_auto"].setText(datos.get("num_auto", ""))
+                w["fecha_elev"].setText(datos.get("fecha_elev", ""))
 
         # bucle de copia
         for idx, w in enumerate(win.imputados_widgets):
@@ -244,12 +282,20 @@ class CausaData:
             # print(f"[from_sentencia] imputado #{idx+1} fused →", base)
             self.imputados.append(base)
 
+        # Hechos
+        self.hechos.clear()
+        self.num_hechos = sw.var_num_hechos.value()
+        for h_w in sw.hechos:
+            self.hechos.append({
+                "descripcion": h_w["descripcion"].property("html") or h_w["descripcion"].text(),
+                "aclaraciones": h_w["aclaraciones"].text().strip(),
+                "oficina": h_w["oficina"].text().strip(),
+                "juzgado": h_w["rb_j"].isChecked(),
+                "num_auto": h_w["num_auto"].text().strip(),
+                "fecha_elev": h_w["fecha_elev"].text().strip(),
+            })
+
         # print("[DEBUG from_sentencia] Modelo después:", self.imputados)
-
-
-    # (si también necesitás los ‘hechos’, añadí un bucle similar sobre sw.hechos)
-
-        #  ... (añadí algunos; podés extender según necesites) ...
 
     def apply_to_sentencia(self, sw: "SentenciaWidget") -> None:
         """Vuelca los datos almacenados en el modelo a SentenciaWidget."""
@@ -303,7 +349,22 @@ class CausaData:
         count_hechos = len(self.hechos)
         sw.var_num_hechos.setValue(count_hechos or 1)
         sw.update_hechos_section()
-
+        for idx, datos_hec in enumerate(self.hechos):
+            if idx >= len(sw.hechos):
+                break
+            w = sw.hechos[idx]
+            w["descripcion"].setProperty("html", datos_hec.get("descripcion", ""))
+            from PySide6.QtGui import QTextDocument
+            doc = QTextDocument(); doc.setHtml(datos_hec.get("descripcion", ""))
+            w["descripcion"].setText(doc.toPlainText()[:200])
+            w["aclaraciones"].setText(datos_hec.get("aclaraciones", ""))
+            w["oficina"].setText(datos_hec.get("oficina", ""))
+            if datos_hec.get("juzgado", True):
+                w["rb_j"].setChecked(True)
+            else:
+                w["rb_f"].setChecked(True)
+            w["num_auto"].setText(datos_hec.get("num_auto", ""))
+            w["fecha_elev"].setText(datos_hec.get("fecha_elev", ""))
 
         sw.actualizar_plantilla()
 
