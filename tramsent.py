@@ -2533,10 +2533,12 @@ class SentenciaWidget(QWidget):
             format_list_with_semicolons(datos_personales_list)
         )
         art_tribunal = "el" if self.boton_cargo_juez.text().lower() == "juez" else "la"
+        articulo_cargo = "del" if self.rb_juez_m.isChecked() else "de la"
         primer_parrafo = (
             f"En la ciudad de {loc_anchor}, el {fecha_anchor}, se dan a conocer "
             f"los fundamentos de la sentencia dictada en la causa <b>{caratula_anchor}</b>, "
-            f"juzgada por {art_tribunal} {tribunal_anchor}, en la sala {sala_anchor} a cargo {juez_anchor}."
+            f"juzgada por {art_tribunal} {tribunal_anchor}, en la sala {sala_anchor} "
+            f"a cargo {articulo_cargo} {cargo_anchor} {juez_anchor}."
         )
 
         segundo_parrafo = (
@@ -2711,7 +2713,7 @@ class SentenciaWidget(QWidget):
             f"<p align='justify'>&nbsp;&nbsp;&nbsp;&nbsp;<b>PRIMERA CUESTIÓN:</b> {primera_cuestion}</p>"
             f"<p align='justify'>&nbsp;&nbsp;&nbsp;&nbsp;<b>SEGUNDA CUESTIÓN:</b> en su caso, ¿qué calificación legal es aplicable?</p>"
             f"<p align='justify'>&nbsp;&nbsp;&nbsp;&nbsp;<b>TERCERA CUESTIÓN:</b> ¿qué pronunciamiento corresponde dictar?</p>"
-            f"<p align='justify'><b>A LA PRIMERA CUESTIÓN PLANTEADA, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
+            f"<p align='justify'><b>A LA PRIMERA CUESTIÓN PLANTEADA, {anchor(self.cargo_juez_en_mayusculas(), 'edit_cargo_juez', 'Cargo')} {juez_nombre.upper()} DIJO:</b></p>"
         )
 
         acus_unificado_minus = acus_unificado
@@ -3445,7 +3447,7 @@ class SentenciaWidget(QWidget):
             if corr:
                 salvedad = f", con la salvedad de que {corr}"
 
-        plantilla += f"<p align='justify'><b>A LA SEGUNDA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
+        plantilla += f"<p align='justify'><b>A LA SEGUNDA CUESTIÓN, {anchor(self.cargo_juez_en_mayusculas(), 'edit_cargo_juez', 'Cargo')} {juez_nombre.upper()} DIJO:</b></p>"
         calif_es_correcta = self.var_calificacion_legal.currentText() == "Correcta"
         corr = strip_trailing_single_dot(
             self.var_correccion_calif.text().strip()
@@ -3493,7 +3495,7 @@ class SentenciaWidget(QWidget):
             f"<p align='justify'>Así respondo a la presente cuestión.</p>"
         )
 
-        plantilla += f"<p align='justify'><b>A LA TERCERA CUESTIÓN, {self.cargo_juez_en_mayusculas()} {juez_nombre.upper()} DIJO:</b></p>"
+        plantilla += f"<p align='justify'><b>A LA TERCERA CUESTIÓN, {anchor(self.cargo_juez_en_mayusculas(), 'edit_cargo_juez', 'Cargo')} {juez_nombre.upper()} DIJO:</b></p>"
 
         if n_imp == 1:
             plantilla += (
