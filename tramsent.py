@@ -549,6 +549,40 @@ class CargoJuezDialog(QDialog):
         return cargo, sexo
 
 
+class NombreSexoDialog(QDialog):
+    """Diálogo para editar nombre y sexo de una persona."""
+
+    def __init__(self, nombre: str, sexo: str, titulo: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(titulo)
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Nombre:"))
+        self.edit = QLineEdit(nombre)
+        layout.addWidget(self.edit)
+
+        layout.addWidget(QLabel("Sexo:"))
+        sex_layout = QHBoxLayout()
+        self.rb_m = QRadioButton("M")
+        self.rb_f = QRadioButton("F")
+        (self.rb_f if sexo == "F" else self.rb_m).setChecked(True)
+        sex_layout.addWidget(self.rb_m)
+        sex_layout.addWidget(self.rb_f)
+        layout.addLayout(sex_layout)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(btn_box)
+
+        btn_box.accepted.connect(self.accept)
+        btn_box.rejected.connect(self.reject)
+
+    def values(self) -> tuple[str, str]:
+        nombre = self.edit.text().strip()
+        sexo = "F" if self.rb_f.isChecked() else "M"
+        return nombre, sexo
+
+
 ORDINALES_HECHOS = [
     "Primer",
     "Segundo",
@@ -2033,6 +2067,20 @@ class SentenciaWidget(QWidget):
             self.editar_cargo_juez()
             return
 
+        if href == "edit_fiscal":
+            dlg = NombreSexoDialog(
+                self.var_fiscal.text(),
+                self.combo_fiscal_sexo.currentText(),
+                "Editar fiscal",
+                self,
+            )
+            if dlg.exec():
+                nombre, sexo = dlg.values()
+                self.var_fiscal.setText(nombre)
+                self.combo_fiscal_sexo.setCurrentText(sexo)
+                self.actualizar_plantilla()
+            return
+
         edit_map = {
             "edit_localidad": (self.var_localidad.text, self.var_localidad.setText, "Localidad"),
             "edit_fecha_audiencia": (self.var_dia_audiencia.text, self.var_dia_audiencia.setText, "Fecha de audiencia"),
@@ -2040,7 +2088,6 @@ class SentenciaWidget(QWidget):
             "edit_tribunal": (self.var_tribunal.currentText, self.var_tribunal.setCurrentText, "Tribunal"),
             "edit_sala": (self.var_sala.currentText, self.var_sala.setCurrentText, "Sala"),
             "edit_juez": (self.var_juez.text, self.var_juez.setText, "Juez/jueza"),
-            "edit_fiscal": (self.var_fiscal.text, self.var_fiscal.setText, "Fiscal"),
         }
 
         if href in edit_map:
@@ -2089,8 +2136,27 @@ class SentenciaWidget(QWidget):
                 self.abrir_ventana_ultima_palabra(idx)
                 return
             le = self.imputados[idx].get(field)
+            if field == "nombre" and le:
+                cb = self.imputados[idx]["sexo_cb"]
+                dlg = NombreSexoDialog(
+                    le.text(),
+                    cb.currentText(),
+                    f"Editar imputado #{idx+1}",
+                    self,
+                )
+                if dlg.exec():
+                    nombre, sexo = dlg.values()
+                    le.setText(nombre)
+                    cb.setCurrentText(sexo)
+                    self.actualizar_plantilla()
+                return
             if le:
-                text, ok = QInputDialog.getText(self, field.capitalize(), field.capitalize(), text=le.text())
+                text, ok = QInputDialog.getText(
+                    self,
+                    field.capitalize(),
+                    field.capitalize(),
+                    text=le.text(),
+                )
                 if ok:
                     le.setText(text.strip())
                     self.actualizar_plantilla()
