@@ -1,50 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, os, re
-from datetime import datetime
+import ctypes
+import html
+import os
+import re
+import sys
 from collections import defaultdict
-from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from PySide6.QtCore import Qt, QEvent
-from PySide6.QtWidgets import QFileDialog, QAbstractSpinBox
-from PySide6.QtGui import QFont, QPainter
+from datetime import datetime
 from functools import partial
+from html import unescape
+
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
+
+from PySide6.QtCore import QEvent, QTimer, Qt, Signal
+from PySide6.QtGui import (
+    QAction,
+    QFont,
+    QIcon,
+    QPainter,
+    QTextCharFormat,
+    QTextDocument,
+)
 from PySide6.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
-    QMainWindow,
-    QWidget,
-    QLabel,
-    QLineEdit,
-    QTextEdit,
-    QTextBrowser,
-    QComboBox,
-    QRadioButton,
     QButtonGroup,
-    QPushButton,
-    QGridLayout,
-    QVBoxLayout,
-    QHBoxLayout,
-    QScrollArea,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
-    QSizePolicy,
-    QToolButton,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
     QInputDialog,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QTextBrowser,
+    QTextEdit,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon
-import ctypes
-from PySide6.QtCore import Qt, Signal
+
 from core_data import CausaData
-from PySide6.QtWidgets import QDialog, QVBoxLayout
-from PySide6.QtWidgets import QMessageBox
 from widgets import NoWheelComboBox, NoWheelSpinBox
-import html
-from html import unescape
-import html
-from PySide6.QtGui import QFont, QPainter, QTextCharFormat, QAction, QTextDocument
 
 
 myappid = "com.miempresa.miproducto.1.0"  # Identificador único
@@ -3644,10 +3651,6 @@ class SentenciaWidget(QWidget):
         while len(self.data.imputados) <= idx:
             self.data.imputados.append({})
         self.data.imputados[idx][key] = value.strip()
-
-
-from PySide6.QtWidgets import QApplication, QMessageBox
-
 
 def confirm_and_quit(widget) -> None:
     """Muestra un QMessageBox; si el usuario acepta, cierra TODA la app."""
