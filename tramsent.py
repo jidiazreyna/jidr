@@ -1145,6 +1145,18 @@ class SentenciaWidget(QWidget):
         basic_html = re.sub(r'font-size\s*:[^;"]+;?', "", basic_html, flags=re.I)
         # forzamos que cada párrafo venga con align="justify"
         basic_html = re.sub(r"<p\b", '<p align="justify"', basic_html, flags=re.I)
+
+        # Reemplazamos el ancla de «resuelvo» por su HTML real para conservar
+        # los párrafos originales en el portapapeles
+        html_resuelvo = self.var_resuelvo.property("html") or ""
+        if html_resuelvo:
+            basic_html = re.sub(
+                r'<a\s+href="resuelvo"[^>]*>.*?</a>',
+                html_resuelvo,
+                basic_html,
+                flags=re.I | re.S,
+            )
+
         # removemos estilos y anclas para evitar copiar resaltados
         basic_html = _sanitize_html(basic_html)
 
