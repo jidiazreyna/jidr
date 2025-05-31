@@ -3047,6 +3047,11 @@ class SentenciaWidget(QWidget):
                     imp["condiciones"].property("html") or imp["condiciones"].text()
                 ).strip()
             )
+            condiciones = anchor_html(
+                condiciones or "[condiciones]",
+                f"edit_imp_condiciones_{i}",
+                "Condiciones",
+            )
             verb = verbs[i % len(verbs)]
 
             if i == 0:
@@ -3057,36 +3062,43 @@ class SentenciaWidget(QWidget):
 
         plantilla += "</p>"
 
-        no_registra_list = []
-        si_registra_list = []
+        mentions = []
+        has_no = False
+        has_si = False
         for i, imp in enumerate(self.imputados):
             nm = final_names_list[i]
             name_i = f"<b>{nm}</b>"
             no_registra = imp["antecedentes_opcion"][0].isChecked()
-            ant_text = imp["antecedentes"].text().strip()
+            ant_html = (
+                imp["antecedentes"].property("html") or imp["antecedentes"].text()
+            ).strip()
+            ant_html = strip_trailing_single_dot(ant_html)
             if no_registra:
-                no_registra_list.append(name_i)
+                has_no = True
+                ant_anchor = anchor(
+                    "no registra condenas computables",
+                    f"edit_imp_antecedentes_{i}",
+                    "Antecedentes",
+                )
+                mentions.append(("no", f"{name_i} {ant_anchor}."))
             else:
-                if ant_text:
-                    si_registra_list.append((name_i, ant_text))
-                else:
-                    si_registra_list.append(
-                        (name_i, "registra antecedentes penales (sin detalle).")
+                has_si = True
+                if ant_html:
+                    ant_anchor = anchor_html(
+                        ant_html,
+                        f"edit_imp_antecedentes_{i}",
+                        "Antecedentes",
                     )
-
-        mentions = []
-        if no_registra_list:
-            if len(no_registra_list) == 1:
-                mention_sin = f"{no_registra_list[0]} no registra condenas computables."
-            else:
-                conj = ", ".join(no_registra_list[:-1]) + " y " + no_registra_list[-1]
-                mention_sin = f"{conj} no registran condenas computables."
-            mentions.append(mention_sin)
-
-        for nombre_en_negrita, texto_antecedentes in si_registra_list:
-            mentions.append(
-                f"{nombre_en_negrita} registra los siguientes antecedentes: {texto_antecedentes}"
-            )
+                    mentions.append(
+                        ("si", f"{name_i} registra los siguientes antecedentes: {ant_anchor}.")
+                    )
+                else:
+                    ant_anchor = anchor(
+                        "registra antecedentes penales (sin detalle).",
+                        f"edit_imp_antecedentes_{i}",
+                        "Antecedentes",
+                    )
+                    mentions.append(("si", f"{name_i} {ant_anchor}"))
 
         if not mentions:
             plantilla += (
@@ -3098,18 +3110,15 @@ class SentenciaWidget(QWidget):
             total_m = len(mentions)
             prefixes_cycle = ["A su vez,", "Separadamente,", "Asimismo,"]
 
-            for i, mention in enumerate(mentions):
+            for i, (_, mention) in enumerate(mentions):
                 if i == 0:
                     texto_antecedentes += mention
                 else:
                     es_ultima = i == total_m - 1
-                    if i == 1 and no_registra_list and si_registra_list:
+                    if i == 1 and has_no and has_si:
                         prefix = "Por su parte,"
                     else:
-                        if es_ultima:
-                            prefix = "Finalmente,"
-                        else:
-                            prefix = prefixes_cycle[(i - 1) % len(prefixes_cycle)]
+                        prefix = "Finalmente," if es_ultima else prefixes_cycle[(i - 1) % len(prefixes_cycle)]
                     texto_antecedentes += f" {prefix} {mention}"
 
             texto_antecedentes += "</p>"
