@@ -741,17 +741,12 @@ class SentenciaWidget(QWidget):
         self.var_fiscal.textChanged.connect(
             lambda t: setattr(self.data, "fiscal_nombre", t.strip())
         )
-        self.rb_fiscal_m = QRadioButton("M")
-        self.rb_fiscal_f = QRadioButton("F")
-        if self.data.fiscal_sexo == "F":
-            self.rb_fiscal_f.setChecked(True)
-        else:
-            self.rb_fiscal_m.setChecked(True)
-        self.rb_fiscal_m.toggled.connect(
-            lambda chk: chk and setattr(self.data, "fiscal_sexo", "M")
-        )
-        self.rb_fiscal_f.toggled.connect(
-            lambda chk: chk and setattr(self.data, "fiscal_sexo", "F")
+
+        self.combo_fiscal_sexo = NoWheelComboBox()
+        self.combo_fiscal_sexo.addItems(["M", "F"])
+        self.combo_fiscal_sexo.setCurrentText(self.data.fiscal_sexo)
+        self.combo_fiscal_sexo.currentTextChanged.connect(
+            lambda txt: setattr(self.data, "fiscal_sexo", txt)
         )
 
         # Día de audiencia
@@ -1737,8 +1732,7 @@ class SentenciaWidget(QWidget):
         general_layout.addWidget(lbl_fisc, row, 0)
         hbox_fisc = QHBoxLayout()
         hbox_fisc.addWidget(self.var_fiscal)
-        hbox_fisc.addWidget(self.rb_fiscal_m)
-        hbox_fisc.addWidget(self.rb_fiscal_f)
+        hbox_fisc.addWidget(self.combo_fiscal_sexo)
         general_layout.addLayout(hbox_fisc, row, 1)
         row += 1
 
@@ -1975,8 +1969,7 @@ class SentenciaWidget(QWidget):
         self.rb_juez_m.toggled.connect(self.actualizar_plantilla)
         self.rb_juez_f.toggled.connect(self.actualizar_plantilla)
         self.var_fiscal.textChanged.connect(self.actualizar_plantilla)
-        self.rb_fiscal_m.toggled.connect(self.actualizar_plantilla)
-        self.rb_fiscal_f.toggled.connect(self.actualizar_plantilla)
+        self.combo_fiscal_sexo.currentTextChanged.connect(self.actualizar_plantilla)
         self.var_dia_audiencia.textChanged.connect(self.actualizar_plantilla)
         self.var_num_imputados.valueChanged.connect(
             lambda: (self.update_imputados_section(), self.actualizar_plantilla())
@@ -2162,15 +2155,13 @@ class SentenciaWidget(QWidget):
                 lambda txt, i=idx - 1: self._sync_imp(i, "nombre", txt)
             )
             lbl_sexo = QLabel("Sexo:")
-            rb_m = QRadioButton("M")
-            rb_f = QRadioButton("F")
-            rb_m.setChecked(True)
-            grupo_sexo = QButtonGroup(container)
-            grupo_sexo.addButton(rb_m)
-            grupo_sexo.addButton(rb_f)
+            combo_sexo = NoWheelComboBox()
+            combo_sexo.addItems(["M", "F"])
+            combo_sexo.setCurrentText(
+                self.data.imputados[idx - 1]["sexo"] if idx - 1 < len(self.data.imputados) else "M"
+            )
             layout.addWidget(lbl_sexo, 1, 0)
-            layout.addWidget(rb_m, 1, 1)
-            layout.addWidget(rb_f, 1, 2)
+            layout.addWidget(combo_sexo, 1, 1)
             lbl_datos = QLabel("Datos personales:")
             le_datos = QLineEdit()
             btn_datos = QPushButton("Editar datos personales")
@@ -2294,8 +2285,9 @@ class SentenciaWidget(QWidget):
                 le_pautas,
             ]:
                 w.textChanged.connect(self.actualizar_plantilla)
-            for w in [rb_m, rb_f, rb_ant_no, rb_ant_si]:
+            for w in [rb_ant_no, rb_ant_si]:
                 w.toggled.connect(self.actualizar_plantilla)
+            combo_sexo.currentTextChanged.connect(self.actualizar_plantilla)
             for w in [cb_tipo_def]:
                 w.currentTextChanged.connect(self.actualizar_plantilla)
 
@@ -2303,7 +2295,7 @@ class SentenciaWidget(QWidget):
                 {
                     "container": container,
                     "nombre": le_nombre,
-                    "sexo_rb": (rb_m, rb_f),
+                    "sexo_cb": combo_sexo,
                     "datos": le_datos,
                     "defensor": le_defensor,
                     "tipo_def": cb_tipo_def,
@@ -2398,10 +2390,7 @@ class SentenciaWidget(QWidget):
     def get_sexos_imputados(self):
         sexos = []
         for imp in self.imputados:
-            if imp["sexo_rb"][0].isChecked():
-                sexos.append("M")
-            else:
-                sexos.append("F")
+            sexos.append(imp["sexo_cb"].currentText())
         return sexos
 
     def actualizar_plantilla(self):
@@ -2462,7 +2451,7 @@ class SentenciaWidget(QWidget):
         # 7) Fiscal
         fiscal_nombre = self.var_fiscal.text().strip()
         fiscal_anchor = anchor(fiscal_nombre, "edit_fiscal", "Fiscal")
-        fiscal_articulo = "el" if self.rb_fiscal_m.isChecked() else "la"
+        fiscal_articulo = "el" if self.combo_fiscal_sexo.currentText() == "M" else "la"
 
         # 8) Imputados => para “el/la/las/los imputado/a/as/os”,
         n_imp = self.var_num_imputados.value()
@@ -3601,7 +3590,9 @@ class SentenciaWidget(QWidget):
             def_name = imp["defensor"].text().strip()
             if tipo.startswith("púb"):
                 imputados_publicos.append(nm)
-                sexos_publicos.append("M" if imp["sexo_rb"][0].isChecked() else "F")
+                sexos_publicos.append(
+                    "M" if imp["sexo_cb"].currentText() == "M" else "F"
+                )
                 if def_name:
                     defensores_publicos.add(def_name)
             else:
