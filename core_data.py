@@ -189,7 +189,7 @@ class CausaData:
                 w["descripcion"].setProperty("html", datos.get("descripcion", ""))
                 from PySide6.QtGui import QTextDocument
                 doc = QTextDocument(); doc.setHtml(datos.get("descripcion", ""))
-                w["descripcion"].setText(doc.toPlainText()[:200])
+                w["descripcion"].setText(doc.toPlainText().replace("\n", " "))
                 w["aclaraciones"].setText(datos.get("aclaraciones", ""))
                 w["oficina"].setText(datos.get("oficina", ""))
                 if datos.get("juzgado", True):
@@ -358,7 +358,7 @@ class CausaData:
             w["descripcion"].setProperty("html", datos_hec.get("descripcion", ""))
             from PySide6.QtGui import QTextDocument
             doc = QTextDocument(); doc.setHtml(datos_hec.get("descripcion", ""))
-            w["descripcion"].setText(doc.toPlainText()[:200])
+            w["descripcion"].setText(doc.toPlainText().replace("\n", " "))
             w["aclaraciones"].setText(datos_hec.get("aclaraciones", ""))
             w["oficina"].setText(datos_hec.get("oficina", ""))
             if datos_hec.get("juzgado", True):
