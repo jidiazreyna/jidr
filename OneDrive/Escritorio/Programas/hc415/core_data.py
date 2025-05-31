@@ -86,10 +86,11 @@ class CausaData:
         self.fiscal_nombre   = getattr(win, "entry_fiscal",       None).text() if hasattr(win, "entry_fiscal") else self.fiscal_nombre
         self.sentencia_num   = getattr(win, "entry_sentencia",    None).text() if hasattr(win, "entry_sentencia") else self.sentencia_num
         if hasattr(win, "entry_resuelvo"):
-            html_full = (
-                win.entry_resuelvo.property("html")
-                or win.entry_resuelvo.toHtml()
-            )
+            # Si no hay HTML guardado, ``toHtml()`` produce la plantilla vacía
+            # de Qt. Guardar ese contenido genera caracteres inesperados al
+            # volver a cargar o exportar la sentencia.
+            html_full = win.entry_resuelvo.property("html") or ""
+
             self.resuelvo_html = html_full
             from PySide6.QtGui import QTextDocument
             doc = QTextDocument(); doc.setHtml(html_full)

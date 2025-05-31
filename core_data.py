@@ -86,10 +86,12 @@ class CausaData:
         self.fiscal_nombre   = getattr(win, "entry_fiscal",       None).text() if hasattr(win, "entry_fiscal") else self.fiscal_nombre
         self.sentencia_num   = getattr(win, "entry_sentencia",    None).text() if hasattr(win, "entry_sentencia") else self.sentencia_num
         if hasattr(win, "entry_resuelvo"):
-            html_full = (
-                win.entry_resuelvo.property("html")
-                or win.entry_resuelvo.toHtml()
-            )
+            # Cuando el widget no tiene HTML almacenado en la property,
+            # ``toHtml()`` devuelve la plantilla vacía de Qt (con DOCTYPE y
+            # meta etiquetas). Guardar eso provoca que aparezcan caracteres
+            # extraños al reconstruir la sentencia o generar el DOCX.
+            html_full = win.entry_resuelvo.property("html") or ""
+
             self.resuelvo_html = html_full
             from PySide6.QtGui import QTextDocument
             doc = QTextDocument(); doc.setHtml(html_full)
