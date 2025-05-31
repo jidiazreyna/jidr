@@ -193,6 +193,15 @@ class CausaData:
         self.juez_nombre     = sw.var_juez.text().strip()
         self.juez_sexo       = "F" if sw.rb_juez_f.isChecked() else "M"
         self.juez_cargo      = sw.boton_cargo_juez.text().lower()
+        # Mantener sincronizado el tipo de órgano con el cargo del juez.
+        # Cuando el usuario cambia el cargo en ``SentenciaWidget`` entre
+        # ``juez`` y ``vocal`` también debemos actualizar el campo
+        # ``articulo`` que se muestra en la pantalla principal.
+        self.articulo = (
+            "Cámara en lo Criminal y Correccional"
+            if self.juez_cargo == "vocal"
+            else "Juzgado de Control"
+        )
         self.fiscal_nombre   = sw.var_fiscal.text().strip()
         self.fiscal_sexo     = "F" if sw.rb_fiscal_f.isChecked() else "M"
         self.fecha_audiencia = sw.var_dia_audiencia.text().strip()
