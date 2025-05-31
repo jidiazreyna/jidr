@@ -498,6 +498,42 @@ def anchor_html(html_text, clave, placeholder=None):
     )
 
 
+class CargoJuezDialog(QDialog):
+    """Diálogo para elegir cargo y sexo del juez/vocal."""
+
+    def __init__(self, cargo: str, sexo: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Elegir cargo y sexo")
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Cargo:"))
+        self.combo = QComboBox()
+        self.combo.addItems(["juez", "vocal"])
+        self.combo.setCurrentText(cargo)
+        layout.addWidget(self.combo)
+
+        layout.addWidget(QLabel("Sexo:"))
+        sex_layout = QHBoxLayout()
+        self.rb_m = QRadioButton("M")
+        self.rb_f = QRadioButton("F")
+        (self.rb_f if sexo == "F" else self.rb_m).setChecked(True)
+        sex_layout.addWidget(self.rb_m)
+        sex_layout.addWidget(self.rb_f)
+        layout.addLayout(sex_layout)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(btn_box)
+
+        btn_box.accepted.connect(self.accept)
+        btn_box.rejected.connect(self.reject)
+
+    def values(self) -> tuple[str, str]:
+        cargo = self.combo.currentText()
+        sexo = "F" if self.rb_f.isChecked() else "M"
+        return cargo, sexo
+
+
 ORDINALES_HECHOS = [
     "Primer",
     "Segundo",
@@ -689,7 +725,12 @@ class SentenciaWidget(QWidget):
         self.rb_juez_f.toggled.connect(
             lambda chk: chk and setattr(self.data, "juez_sexo", "F")
         )
-        self.cargo_juez = self.data.juez_cargo  # “juez” o “vocal”
+        self.cargo_juez = self.data.juez_cargo  # "juez" o "vocal"
+        if self.data.articulo.startswith("Cámara"):
+            self.cargo_juez = "vocal"
+        elif self.data.articulo.startswith("Juzgado"):
+            self.cargo_juez = "juez"
+        self.data.juez_cargo = self.cargo_juez
 
         # Fiscal + sexo
         self.var_fiscal = QLineEdit()
@@ -931,13 +972,20 @@ class SentenciaWidget(QWidget):
 
         sb.setValue(pos)
 
-    def toggle_cargo_juez(self):
-        if self.cargo_juez == "juez":
-            self.cargo_juez = "vocal"
-        else:
-            self.cargo_juez = "juez"
-        self.boton_cargo_juez.setText(self.cargo_juez)
-        self.actualizar_plantilla()
+    def editar_cargo_juez(self):
+        """Permite elegir cargo (juez/vocal) y sexo."""
+        dlg = CargoJuezDialog(self.cargo_juez, "F" if self.rb_juez_f.isChecked() else "M", self)
+        if dlg.exec():
+            cargo, sexo = dlg.values()
+            self.cargo_juez = cargo
+            self.boton_cargo_juez.setText(cargo)
+            if sexo == "F":
+                self.rb_juez_f.setChecked(True)
+            else:
+                self.rb_juez_m.setChecked(True)
+            self.data.juez_cargo = cargo
+            self.data.juez_sexo = sexo
+            self.actualizar_plantilla()
 
     def _toggle_bold(self, editor: QTextEdit):
         cursor = editor.textCursor()
@@ -1673,9 +1721,11 @@ class SentenciaWidget(QWidget):
         hbox_juez.addWidget(self.var_juez)
         hbox_juez.addWidget(self.rb_juez_m)
         hbox_juez.addWidget(self.rb_juez_f)
-        self.boton_cargo_juez = QPushButton("juez")
-        self.boton_cargo_juez.setCheckable(True)
-        self.boton_cargo_juez.clicked.connect(self.toggle_cargo_juez)
+        self.boton_cargo_juez = QPushButton(self.cargo_juez)
+        self.boton_cargo_juez.setStyleSheet(
+            "color: blue; text-decoration: underline; background: transparent; border: none;"
+        )
+        self.boton_cargo_juez.clicked.connect(self.editar_cargo_juez)
         hbox_juez.addWidget(self.boton_cargo_juez)
         general_layout.addLayout(hbox_juez, row, 1)
         row += 1
@@ -1981,6 +2031,10 @@ class SentenciaWidget(QWidget):
         }
         if href in rich_map:
             rich_map[href]()
+            return
+
+        if href == "edit_cargo_juez":
+            self.editar_cargo_juez()
             return
 
         edit_map = {
@@ -2376,16 +2430,14 @@ class SentenciaWidget(QWidget):
         # 6) Juez
         juez_nombre = self.var_juez.text().strip()
         juez_anchor = anchor(juez_nombre, "edit_juez", "Juez")
-        if self.rb_juez_m.isChecked():
-            juez_intro = "del juez"
-        else:
-            juez_intro = "de la jueza"
 
         juez_cargo = self.boton_cargo_juez.text().lower()  # "juez" o "vocal"
-
-        # Si eligió "vocal", entonces reemplazamos "juez"/"jueza" por "vocal"
-        if juez_cargo == "vocal":
-            juez_intro = "del vocal" if self.rb_juez_m.isChecked() else "de la vocal"
+        cargo_palabra = "vocal" if juez_cargo == "vocal" else (
+            "juez" if self.rb_juez_m.isChecked() else "jueza"
+        )
+        articulo = "del" if self.rb_juez_m.isChecked() else "de la"
+        cargo_anchor = anchor(cargo_palabra, "edit_cargo_juez", "Cargo")
+        juez_intro = f"{articulo} {cargo_anchor}"
 
         texto_juez = strip_trailing_single_dot(f"{juez_intro} {juez_nombre}")
 
