@@ -1485,14 +1485,22 @@ class SentenciaWidget(QWidget):
     def abrir_ventana_antecedentes(self, idx):
         """Editor rico para antecedentes penales del imputado #idx."""
         qle = self.imputados[idx]["antecedentes"]
+        rb_no, rb_si = self.imputados[idx]["antecedentes_opcion"]
         html_inicial = qle.property("html") or qle.text()
+
+        def _on_accept(h: str):
+            self._guardar_html_lineedit(qle, h)
+            has_text = bool(QTextDocument(h).toPlainText().strip())
+            if has_text:
+                rb_si.setChecked(True)
+            else:
+                rb_no.setChecked(True)
+            self.actualizar_plantilla()
+
         self._rich_text_dialog(
             f"Editar antecedentes – imputado #{idx+1}",
             html_inicial,
-            lambda h: (
-                self._guardar_html_lineedit(qle, h),
-                self.actualizar_plantilla(),
-            ),
+            _on_accept,
         )
 
     def abrir_ventana_confesion(self, idx):
