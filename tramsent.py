@@ -2685,7 +2685,7 @@ class SentenciaWidget(QWidget):
         plantilla = nuevo_inicio
 
         acusaciones_parciales = []
-        for h in self.hechos:
+        for idx, h in enumerate(self.hechos):
             oficina_rb_val = "Juzgado" if h["rb_j"].isChecked() else "Fiscalía"
             oficina_txt = h["oficina"].text().strip()
             num_auto = h["num_auto"].text().strip()
@@ -2695,19 +2695,19 @@ class SentenciaWidget(QWidget):
             if oficina_rb_val == "Juzgado":
                 base = "El auto de elevación a juicio"
                 if num_auto and fecha_elev:
-                    texto = f"{base} n° {num_auto} de fecha {fecha_elev}"
+                    texto = f"{base} n° {anchor(num_auto, f'edit_hecho_num_auto_{idx}', 'n°')} de fecha {anchor(fecha_elev, f'edit_hecho_fecha_elev_{idx}', 'fecha')}"
                 elif num_auto:
-                    texto = f"{base} n° {num_auto}"
+                    texto = f"{base} n° {anchor(num_auto, f'edit_hecho_num_auto_{idx}', 'n°')}"
                 elif fecha_elev:
-                    texto = f"{base} de fecha {fecha_elev}"
+                    texto = f"{base} de fecha {anchor(fecha_elev, f'edit_hecho_fecha_elev_{idx}', 'fecha')}"
                 else:
                     texto = base
             else:
                 base = "El requerimiento de citación a juicio"
-                texto = f"{base} de fecha {fecha_elev}" if fecha_elev else base
+                texto = f"{base} de fecha {anchor(fecha_elev, f'edit_hecho_fecha_elev_{idx}', 'fecha')}" if fecha_elev else base
 
             if oficina_txt:
-                texto += f", dictado por {oficina_txt},"
+                texto += f", dictado por {anchor(oficina_txt, f'edit_hecho_oficina_{idx}', 'oficina')},"
             texto_aclar = f" ({aclaraciones})" if aclaraciones else ""
 
             acusaciones_parciales.append(f"{texto}")
@@ -2792,26 +2792,26 @@ class SentenciaWidget(QWidget):
 
         # Listado de hechos
         for i in range(min(n_hec, len(self.hechos))):
-            desc_str = (
+            desc_html = (
                 self.hechos[i]["descripcion"].property("html")
                 or self.hechos[i]["descripcion"].text()
             ).strip()
             aclar_str = self.hechos[i]["aclaraciones"].text().strip()
+            desc_anchor = anchor_html(f"<i>{desc_html}</i>", f"edit_hecho_descripcion_{i}", "hecho")
+            aclar_anchor = anchor(aclar_str, f"edit_hecho_aclaraciones_{i}", "aclaración") if aclar_str else ""
             if n_hec == 1:
                 if aclar_str:
-                    plantilla += (
-                        f"<p align='justify'><i>{desc_str}</i> ({aclar_str})</p>"
-                    )
+                    plantilla += f"<p align='justify'>{desc_anchor} ({aclar_anchor})</p>"
                 else:
-                    plantilla += f"<p align='justify'><i>{desc_str}</i></p>"
+                    plantilla += f"<p align='justify'>{desc_anchor}</p>"
             else:
                 ordinal = (
                     ORDINALES_HECHOS[i] if i < len(ORDINALES_HECHOS) else f"{i+1}°"
                 )
                 if aclar_str:
-                    plantilla += f"<p align='justify'><b>{ordinal} hecho ({aclar_str})</b>: <i>{desc_str}</i></p>"
+                    plantilla += f"<p align='justify'><b>{ordinal} hecho ({aclar_anchor})</b>: {desc_anchor}</p>"
                 else:
-                    plantilla += f"<p align='justify'><b>{ordinal} hecho:</b> <i>{desc_str}</i></p>"
+                    plantilla += f"<p align='justify'><b>{ordinal} hecho:</b> {desc_anchor}</p>"
 
         # Determinamos si decimos "la existencia del hecho" o "la existencia de los hechos"
         if n_hec == 1:

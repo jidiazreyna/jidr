@@ -13,7 +13,8 @@ from html import unescape
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QTextEdit,
     QComboBox, QPushButton, QGridLayout, QVBoxLayout, QTabWidget,
-    QFileDialog, QMessageBox, QSplitter, QCheckBox, QScrollArea, QDialog, QDialogButtonBox
+    QFileDialog, QMessageBox, QSplitter, QCheckBox, QScrollArea, QDialog,
+    QDialogButtonBox, QRadioButton, QButtonGroup
 )
 from PySide6.QtGui import QFont
 from PySide6.QtGui import QTextBlockFormat
@@ -390,6 +391,15 @@ class MainWindow(QMainWindow):
 
         self.entry_firmantes  = add_line('entry_firmantes',  "Firmantes de la sentencia:")
         self.combo_renuncia   = add_combo('combo_renuncia',  "Renuncia a casación:", ["Sí", "No"])
+
+        label("Número de hechos:")
+        self.spin_hechos = NoWheelSpinBox(); self.spin_hechos.setRange(1, 15)
+        self.spin_hechos.valueChanged.connect(self.rebuild_hechos)
+        self.form.addWidget(self.spin_hechos, self._row, 1); self._row += 1
+
+        self.tabs_hechos = QTabWidget()
+        self.form.addWidget(self.tabs_hechos, self._row, 0, 1, 2)
+        self._row += 1
         
         # === Cargar datos existentes desde self.data ===
         self.entry_caratula.setText(self.data.caratula)
@@ -404,11 +414,17 @@ class MainWindow(QMainWindow):
 
         self.entry_firmantes .setText(getattr(self.data, "firmantes",   ""))
         self.combo_renuncia  .setCurrentText("Sí" if getattr(self.data, "renuncia", False) else "No")
+
+        self.spin_hechos.setValue(getattr(self.data, "num_hechos", len(self.data.hechos) or 1))
         
         # Número de imputados (dispara rebuild_imputados con la cantidad correcta)
         self.combo_n.setCurrentText(str(self.data.n_imputados or 1))
                 # ───── helpers *dentro* de __init__ ───────────────────────────
         
+        # Construcción de pestañas de hechos
+        self.hechos_widgets = []
+        self.rebuild_hechos()
+
         # Construcción de pestañas de imputados
         self.tabs_imp = QTabWidget()
         self.form.addWidget(self.tabs_imp, self._row, 0, 1, 2)
@@ -658,6 +674,91 @@ class MainWindow(QMainWindow):
         self._refresh_imp_names_in_selector()
         self._building = False
 
+    def rebuild_hechos(self):
+        if getattr(self, "_building_hechos", False):
+            return
+        self._building_hechos = True
+
+        prev_data = []
+        for w in getattr(self, "hechos_widgets", []):
+            dato = {}
+            for k, widget in w.items():
+                if isinstance(widget, QLineEdit):
+                    dato[k] = widget.text()
+                elif isinstance(widget, QRadioButton):
+                    dato[k] = widget.isChecked()
+            prev_data.append(dato)
+
+        self.tabs_hechos.clear()
+        self.hechos_widgets = []
+        n = self.spin_hechos.value()
+
+        for i in range(1, n + 1):
+            tab = QWidget()
+            grid = QGridLayout(tab)
+            row = 0
+
+            def add_pair(text, widget):
+                nonlocal row
+                grid.addWidget(QLabel(text), row, 0)
+                grid.addWidget(widget, row, 1)
+                row += 1
+
+            le_desc = QLineEdit(); le_desc.setReadOnly(True)
+            btn_desc = QPushButton("Redactar el hecho")
+            btn_desc.clicked.connect(lambda _=False, idx=i-1: self.abrir_ventana_hecho_desc(idx))
+            grid.addWidget(QLabel(f"Descripción suceso #{i}"), row, 0)
+            grid.addWidget(btn_desc, row, 1); row += 1
+
+            le_aclar = QLineEdit(); add_pair("Aclaraciones:", le_aclar)
+            le_ofi = QLineEdit(); add_pair("Oficina que elevó:", le_ofi)
+            rb_j = QRadioButton("Juzgado"); rb_f = QRadioButton("Fiscalía"); rb_j.setChecked(True)
+            grp = QButtonGroup(tab); grp.addButton(rb_j); grp.addButton(rb_f)
+            grid.addWidget(rb_j, row, 0); grid.addWidget(rb_f, row, 1); row += 1
+            le_auto = QLineEdit(); add_pair("N° del auto:", le_auto)
+            le_fec = QLineEdit(); add_pair("Fecha de elevación:", le_fec)
+
+            for w in [le_desc, le_aclar, le_ofi, le_auto, le_fec]:
+                w.textChanged.connect(self.update_template)
+            for w in [rb_j, rb_f]:
+                w.toggled.connect(self.update_template)
+
+            self.tabs_hechos.addTab(tab, f"Hecho {i}")
+            self.hechos_widgets.append({
+                "descripcion": le_desc,
+                "aclaraciones": le_aclar,
+                "oficina": le_ofi,
+                "rb_j": rb_j,
+                "rb_f": rb_f,
+                "num_auto": le_auto,
+                "fecha_elev": le_fec,
+            })
+
+            if i-1 < len(prev_data):
+                old = prev_data[i-1]
+                le_desc.setText(old.get("descripcion", ""))
+                le_aclar.setText(old.get("aclaraciones", ""))
+                le_ofi.setText(old.get("oficina", ""))
+                rb_j.setChecked(old.get("rb_j", True))
+                rb_f.setChecked(old.get("rb_f", False))
+                le_auto.setText(old.get("num_auto", ""))
+                le_fec.setText(old.get("fecha_elev", ""))
+
+            if i-1 < len(self.data.hechos):
+                dato = self.data.hechos[i-1]
+                le_desc.setProperty("html", dato.get("descripcion", ""))
+                doc = QTextDocument(); doc.setHtml(dato.get("descripcion", ""))
+                le_desc.setText(doc.toPlainText()[:200])
+                le_aclar.setText(dato.get("aclaraciones", ""))
+                le_ofi.setText(dato.get("oficina", ""))
+                rb_j.setChecked(dato.get("juzgado", True))
+                rb_f.setChecked(not dato.get("juzgado", True))
+                le_auto.setText(dato.get("num_auto", ""))
+                le_fec.setText(dato.get("fecha_elev", ""))
+
+        self._building_hechos = False
+        self.update_template()
+
     def abrir_ventana_resuelvo(self):
         # recupero el HTML completo o, si no existe, la representación
         html_actual = self.entry_resuelvo.property("html") or ""
@@ -681,6 +782,22 @@ class MainWindow(QMainWindow):
         self.data.resuelvo      = preview
         # 4) refresco la plantilla
         self.update_template()
+
+    def _guardar_html_lineedit(self, qlineedit, html):
+        clean = html.strip()
+        qlineedit.setProperty("html", clean)
+        doc = QTextDocument(); doc.setHtml(clean)
+        qlineedit.setText(doc.toPlainText()[:200])
+        self.update_template()
+
+    def abrir_ventana_hecho_desc(self, idx: int):
+        qle = self.hechos_widgets[idx]["descripcion"]
+        html_actual = qle.property("html") or qle.text()
+        self._rich_text_dialog(
+            f"Editar descripción del suceso #{idx+1}",
+            html_actual,
+            lambda h: self._guardar_html_lineedit(qle, h),
+        )
 
     def _toggle_bold(self, editor: QTextEdit):
         cursor = editor.textCursor()
