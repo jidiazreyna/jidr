@@ -583,6 +583,37 @@ class NombreSexoDialog(QDialog):
         return nombre, sexo
 
 
+class DefensorDialog(QDialog):
+    """Diálogo para editar nombre del defensor y su tipo."""
+
+    def __init__(self, nombre: str, tipo: str, titulo: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(titulo)
+
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Nombre:"))
+        self.edit = QLineEdit(nombre)
+        layout.addWidget(self.edit)
+
+        layout.addWidget(QLabel("Tipo:"))
+        self.combo = QComboBox()
+        self.combo.addItems(["Público", "Privado"])
+        self.combo.setCurrentText(tipo)
+        layout.addWidget(self.combo)
+
+        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(btn_box)
+
+        btn_box.accepted.connect(self.accept)
+        btn_box.rejected.connect(self.reject)
+
+    def values(self) -> tuple[str, str]:
+        nombre = self.edit.text().strip()
+        tipo = self.combo.currentText()
+        return nombre, tipo
+
+
 ORDINALES_HECHOS = [
     "Primer",
     "Segundo",
@@ -2135,6 +2166,19 @@ class SentenciaWidget(QWidget):
             if field == "ultima":
                 self.abrir_ventana_ultima_palabra(idx)
                 return
+            if field == "defensor":
+                le = self.imputados[idx].get("defensor")
+                cb = self.imputados[idx].get("tipo_def")
+                if le and cb:
+                    dlg = DefensorDialog(
+                        le.text(), cb.currentText(), f"Editar defensor #{idx+1}", self
+                    )
+                    if dlg.exec():
+                        nombre, tipo = dlg.values()
+                        le.setText(nombre)
+                        cb.setCurrentText(tipo)
+                        self.actualizar_plantilla()
+                return
             le = self.imputados[idx].get(field)
             if field == "nombre" and le:
                 cb = self.imputados[idx]["sexo_cb"]
@@ -2578,15 +2622,21 @@ class SentenciaWidget(QWidget):
 
         #    Recopilar
         defenders_list = [imp["defensor"].text().strip() for imp in self.imputados]
-        def_dict = {}
+        def_dict = defaultdict(list)
         for i, d in enumerate(defenders_list):
-            if d:
-                def_dict.setdefault(d, []).append(names_list[i])
-        # Al final, unimos con conjunción
+            def_dict[d].append(i)
 
-        defensores_unicos = list(def_dict.keys())  # no repetidos
+        defensores_unicos = list(def_dict.keys())
+        defensores_anchor = [
+            anchor(
+                d,
+                f"edit_imp_defensor_{def_dict[d][0]}",
+                "Defensor",
+            )
+            for d in defensores_unicos
+        ]
         defensa_final = strip_trailing_single_dot(
-            format_list_for_sentence(defensores_unicos)
+            format_list_for_sentence(defensores_anchor)
         )
 
         # 12) “{fue/ron} {acusado/a/as/os}”:
@@ -3229,20 +3279,23 @@ class SentenciaWidget(QWidget):
         else:
             solicitudes_str = "las solicitudes formuladas"
 
-        defenders_list = [
-            imp["defensor"].text().strip()
-            for imp in self.imputados
-            if imp["defensor"].text().strip()
-        ]
-        def_dict = {}
+        defenders_list = [imp["defensor"].text().strip() for imp in self.imputados]
+        def_dict = defaultdict(list)
         for i, d in enumerate(defenders_list):
-            # Agrupar por defensor (sin repeticiones)
-            def_dict.setdefault(d, []).append(i)
-        # Obtener la lista de defensores únicos
+            if d:
+                def_dict[d].append(i)
+
         defensores_unicos = list(def_dict.keys())
-        # También ya calculas 'defensa_final' para otra parte:
+        defensores_anchor = [
+            anchor(
+                d,
+                f"edit_imp_defensor_{def_dict[d][0]}",
+                "Defensor",
+            )
+            for d in defensores_unicos
+        ]
         defensa_final = strip_trailing_single_dot(
-            format_list_for_sentence(defensores_unicos)
+            format_list_for_sentence(defensores_anchor)
         )
 
         # Ahora, para el placeholder {su/s defensa/s}:
