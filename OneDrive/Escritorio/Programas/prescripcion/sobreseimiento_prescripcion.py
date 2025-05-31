@@ -219,7 +219,16 @@ class HechoWidget(QWidget):
         lay = QVBoxLayout(self)
         self.txt = QTextEdit(); self.txt.setPlaceholderText(f"Descripción hecho #{idx+1}"); self.txt.setFixedHeight(50)
         lay.addWidget(self.txt)
-    def texto(self)->str: return self.txt.toPlainText().strip() or f"[hecho {self.idx+1}]"
+    def texto(self) -> str:
+        """Return the text for the fact or a generic placeholder.
+
+        The old behaviour appended the index of the fact to the placeholder
+        (e.g. ``[hecho 1]``), which produced output such as ``1. [hecho 1]``
+        when only a single fact was present.  The numbering is now handled
+        solely by ``render_prescripcion`` so the placeholder should always be
+        ``[hecho]`` regardless of position.
+        """
+        return self.txt.toPlainText().strip() or "[hecho]"
 
 class ZoomBrowser(QTextBrowser):
     def wheelEvent(self,ev):
