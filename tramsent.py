@@ -480,6 +480,16 @@ def anchor(texto, clave, placeholder=None):
         f"{html.escape(texto)}</a>"
     )
 
+def anchor_html(html_text, clave, placeholder=None):
+    """Ancla que conserva HTML interno (negrita, p, etc.)."""
+    if not html_text.strip():
+        return anchor("", clave, placeholder)
+    return (
+        f'<a href="{clave}" '
+        f'style="color:blue;text-decoration:none;">'
+        f"{html_text}</a>"
+    )
+
 
 ORDINALES_HECHOS = [
     "Primer",
@@ -3566,12 +3576,13 @@ class SentenciaWidget(QWidget):
 
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
-        if html_resuelvo:
-            preview = self.html_a_plano(html_resuelvo, mantener_saltos=False)
+        if not html_resuelvo.strip():
+            html_anchor = anchor_html("", "resuelvo", "resuelvo")
         else:
-            preview = ""
-        html_resuelvo = anchor(preview, "resuelvo")
-        plantilla += f"<p align='justify'>{html_resuelvo}</p>"
+            if not re.search(r"<p\b", html_resuelvo, flags=re.I):
+                html_resuelvo = f"<p>{html_resuelvo}</p>"
+            html_anchor = anchor_html(html_resuelvo, "resuelvo")
+        plantilla += html_anchor
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
