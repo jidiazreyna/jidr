@@ -749,7 +749,7 @@ class MainWindow(QMainWindow):
                 dato = self.data.hechos[i-1]
                 le_desc.setProperty("html", dato.get("descripcion", ""))
                 doc = QTextDocument(); doc.setHtml(dato.get("descripcion", ""))
-                le_desc.setText(doc.toPlainText()[:200])
+                le_desc.setText(doc.toPlainText().replace("\n", " "))
                 le_aclar.setText(dato.get("aclaraciones", ""))
                 le_ofi.setText(dato.get("oficina", ""))
                 rb_j.setChecked(dato.get("juzgado", True))
@@ -795,7 +795,7 @@ class MainWindow(QMainWindow):
         clean = html.strip()
         qlineedit.setProperty("html", clean)
         doc = QTextDocument(); doc.setHtml(clean)
-        qlineedit.setText(doc.toPlainText()[:200])
+        qlineedit.setText(doc.toPlainText().replace("\n", " "))
         self.update_template()
 
     def abrir_ventana_hecho_desc(self, idx: int):

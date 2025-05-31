@@ -1193,7 +1193,7 @@ class SentenciaWidget(QWidget):
             html_inicial,
             lambda html_limpio: (
                 qle.setProperty("html", html_limpio),
-                qle.setText(QTextDocument(html_limpio).toPlainText()[:200]),
+                qle.setText(QTextDocument(html_limpio).toPlainText().replace("\n", " ")),
                 self.actualizar_plantilla(),
             ),
         )
@@ -1426,7 +1426,7 @@ class SentenciaWidget(QWidget):
         """Guarda `html` aplanado en property('html') y preview plano en el LineEdit."""
         h = self._flatten_inline(html)
         qlineedit.setProperty("html", h)
-        qlineedit.setText(QTextDocument(h).toPlainText()[:200])
+        qlineedit.setText(QTextDocument(h).toPlainText().replace("\n", " "))
         self.actualizar_plantilla()
 
     def abrir_ventana_descripcion(self, idx):
@@ -1545,7 +1545,7 @@ class SentenciaWidget(QWidget):
         # 2) genero preview plano en el QLineEdit
         doc = QTextDocument()
         doc.setHtml(clean)
-        preview = doc.toPlainText().replace("\n", " ")[:200]
+        preview = doc.toPlainText().replace("\n", " ")
         self.var_decomiso_text.setText(preview)
         # 3) refresco la plantilla
         self.actualizar_plantilla()
@@ -1555,7 +1555,7 @@ class SentenciaWidget(QWidget):
         self.var_restriccion_text.setProperty("html", clean)
         doc = QTextDocument()
         doc.setHtml(clean)
-        preview = doc.toPlainText().replace("\n", " ")[:200]
+        preview = doc.toPlainText().replace("\n", " ")
         self.var_restriccion_text.setText(preview)
         self.actualizar_plantilla()
 
@@ -1610,7 +1610,7 @@ class SentenciaWidget(QWidget):
 
         doc = QTextDocument()
         doc.setHtml(clean)
-        preview = doc.toPlainText().replace("\n", " ")[:200]
+        preview = doc.toPlainText().replace("\n", " ")
         self.var_resuelvo.setText(preview)
 
         # 3) ***ACTUALIZO el modelo compartido***
