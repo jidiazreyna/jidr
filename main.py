@@ -309,12 +309,6 @@ class MainWindow(QMainWindow):
             self.form.addWidget(cb, self._row, 1); self._row += 1
             setattr(self, attr, cb); return cb
 
-        label("Número de imputados:")
-        self.combo_n = NoWheelComboBox(); self.combo_n.addItems([str(i) for i in range(1, 21)]); self.combo_n.currentIndexChanged.connect(self.update_template)
-
-        self.form.addWidget(self.combo_n, self._row, 1); self._row += 1
-
-
         self.entry_caratula   = add_line('entry_caratula',   "Carátula:")
         self.combo_articulo   = add_combo('combo_articulo',  "Cámara o juzgado:",
                                         ["Cámara en lo Criminal y Correccional", "Juzgado de Control"])
@@ -417,14 +411,19 @@ class MainWindow(QMainWindow):
         self.combo_renuncia  .setCurrentText("Sí" if getattr(self.data, "renuncia", False) else "No")
 
         self.spin_hechos.setValue(getattr(self.data, "num_hechos", len(self.data.hechos) or 1))
-        
-        # Número de imputados (dispara rebuild_imputados con la cantidad correcta)
-        self.combo_n.setCurrentText(str(self.data.n_imputados or 1))
+
                 # ───── helpers *dentro* de __init__ ───────────────────────────
         
         # Construcción de pestañas de hechos
         self.hechos_widgets = []
         self.rebuild_hechos()
+
+        label("Número de imputados:")
+        self.combo_n = NoWheelComboBox(); self.combo_n.addItems([str(i) for i in range(1, 21)])
+        self.combo_n.currentIndexChanged.connect(self.update_template)
+        self.form.addWidget(self.combo_n, self._row, 1); self._row += 1
+        # Número de imputados (dispara rebuild_imputados con la cantidad correcta)
+        self.combo_n.setCurrentText(str(self.data.n_imputados or 1))
 
         # Construcción de pestañas de imputados
         self.tabs_imp = QTabWidget()
