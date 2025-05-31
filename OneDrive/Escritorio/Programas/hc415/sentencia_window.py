@@ -38,13 +38,15 @@ class SentenciaWindow(QMainWindow):
         self.move(geo.topLeft())                                     # la llevamos allí
 
     def closeEvent(self, ev):
+        sw = self.centralWidget()
+        if isinstance(sw, SentenciaWidget):
+            sw.data.from_sentencia(sw)
+
         if self.skip_confirm:
             ev.accept()
-            # si tenés main_win, lo mostramos
             if hasattr(self, 'main_win'):
                 self.main_win.show()
             else:
-                # fallback a la lógica original
                 self.parent().show()
         else:
             confirm_and_quit(self)
