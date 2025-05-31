@@ -463,12 +463,12 @@ def numero_romano(n: int) -> str:
 
 
 def anchor(texto, clave, placeholder=None):
-    """Genera una ancla amarilla editable para la plantilla."""
+    """Genera una ancla editable para la plantilla."""
     if not texto.strip():
         texto = placeholder or f"[{clave}]"
     return (
         f'<a href="{clave}" '
-        f'style="background-color:#ffffcc;color:black;text-decoration:none;">'
+        f'style="color:blue;text-decoration:none;">'
         f"{html.escape(texto)}</a>"
     )
 
@@ -1122,12 +1122,13 @@ class SentenciaWidget(QWidget):
         plain_text = te.toPlainText().strip()
 
         # ---------- 2) HTML limpio + CSS Times 12 -----------------------------
-        # ---------- 2) HTML limpio + CSS Times 12, alineado a la izquierda -----------------
         basic_html = te.toHtml()
         # quitamos tamaños en línea para aplicar el nuestro
         basic_html = re.sub(r'font-size\s*:[^;"]+;?', "", basic_html, flags=re.I)
-        # forzamos que cada párrafo venga con align="left"
+        # forzamos que cada párrafo venga con align="justify"
         basic_html = re.sub(r"<p\b", '<p align="justify"', basic_html, flags=re.I)
+        # removemos estilos y anclas para evitar copiar resaltados
+        basic_html = _sanitize_html(basic_html)
 
         html_full = (
             "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
@@ -3056,20 +3057,23 @@ class SentenciaWidget(QWidget):
             f"{imput_label} y {defensa_str}."
         )
 
-        aleg_fiscal = self.var_alegato_fiscal.strip()
-        if not aleg_fiscal:
-            aleg_fiscal = "[alegato fiscal]"
-        aleg_fiscal = f'<a href="alegato_fiscal" style="background-color:#ffffcc;color:black;text-decoration:none;">{aleg_fiscal}</a>'
+        aleg_fiscal = anchor(
+            self.var_alegato_fiscal.strip(),
+            "alegato_fiscal",
+            "alegato fiscal",
+        )
 
-        aleg_defensa = self.var_alegato_defensa.strip()
-        if not aleg_defensa:
-            aleg_defensa = "[alegato defensa]"
-        aleg_defensa = f'<a href="alegato_defensa" style="background-color:#ffffcc;color:black;text-decoration:none;">{aleg_defensa}</a>'
+        aleg_defensa = anchor(
+            self.var_alegato_defensa.strip(),
+            "alegato_defensa",
+            "alegato defensa",
+        )
 
-        prueba_anchor = self.var_prueba.strip()
-        if not prueba_anchor:
-            prueba_anchor = "[pruebas]"
-        prueba_anchor = f'<a href="prueba" style="background-color:#ffffcc;color:black;text-decoration:none;">{prueba_anchor}</a>'
+        prueba_anchor = anchor(
+            self.var_prueba.strip(),
+            "prueba",
+            "pruebas",
+        )
 
         plantilla += (
             f"<p align='justify'><b>3. Enumeración de la prueba:</b> "
@@ -3215,10 +3219,11 @@ class SentenciaWidget(QWidget):
                 else:
                     plantilla += f"{el_los_hecho_s} motivo de juzgamiento configuran un caso de {caso_vf}. Los elementos de juicio enunciados y los argumentos desarrollados en la acusación base del juicio de la causa aquí juzgada, sumados a la argumentación del fiscal al momento emitir las conclusiones, en las que solicitó la condena –todo lo cual hago mío por razones de brevedad– satisfacen plenamente el estándar probatorio requerido para tener por acreditada la plataforma fáctica y la intervención {imputado_phrase} tal como {le_les} ha sido atribuida.</p>"
 
-        pruebas_text = self.var_pruebas_importantes.strip()
-        if not pruebas_text:
-            pruebas_text = "[pruebas relevantes]"
-        pruebas_text = f'<a href="pruebas_importantes" style="background-color:#ffffcc;color:black;text-decoration:none;">{pruebas_text}</a>'
+        pruebas_text = anchor(
+            self.var_pruebas_importantes.strip(),
+            "pruebas_importantes",
+            "pruebas relevantes",
+        )
         plantilla += (
             f"<p align='justify'>Al examinar el contenido de tales evidencias, las encuentro suficientes para dictar una condena, "
             f"pues –sin espacio para el principio según el cual la duda debe favorecer a la persona imputada– ponen de manifiesto que "
@@ -3428,10 +3433,11 @@ class SentenciaWidget(QWidget):
         next_section = 2
 
         if self.var_decomiso_option.currentText() == "Sí":
-            html_decomiso = (
-                self.var_decomiso_text.property("html") or self.TEXTO_DECOMISO_DEFECTO
+            html_decomiso = anchor(
+                self.var_decomiso_text.property("html") or self.TEXTO_DECOMISO_DEFECTO,
+                "decomiso",
+                None,
             )
-            html_decomiso = f'<a href="decomiso" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_decomiso}</a>'
             plantilla += f"<p align='justify'><b>{numero_romano(next_section)}. Decomiso:</b> {html_decomiso}</p>"
             next_section += 1
 
@@ -3499,11 +3505,12 @@ class SentenciaWidget(QWidget):
             next_section += 1
 
         if self.var_restriccion_option.currentText() == "Sí":
-            html_restriccion = (
+            html_restriccion = anchor(
                 self.var_restriccion_text.property("html")
-                or self.TEXTO_RESTRICCION_DEFECTO
+                or self.TEXTO_RESTRICCION_DEFECTO,
+                "restriccion",
+                None,
             )
-            html_restriccion = f'<a href="restriccion" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_restriccion}</a>'
             plantilla += f"<p align='justify'><b>{numero_romano(next_section)}. Restricción de contacto y acercamiento:</b> {html_restriccion}</p>"
             next_section += 1
 
@@ -3552,7 +3559,7 @@ class SentenciaWidget(QWidget):
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if html_resuelvo:
-            html_resuelvo = f'<a href="resuelvo" style="background-color:#ffffcc;color:black;text-decoration:none;">{html_resuelvo}</a>'
+            html_resuelvo = anchor(html_resuelvo, "resuelvo")
             plantilla += f"<p align='justify'>{html_resuelvo}</p>"
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
