@@ -1204,6 +1204,31 @@ class SentenciaWidget(QWidget):
         h = re.sub(r"\s+", " ", h).strip()
 
         return html.unescape(h)
+    
+    @staticmethod
+    def _inline_with_paragraphs(html_raw: str) -> str:
+        """
+        Convierte un bloque HTML a inline conservando los saltos de párrafo
+        como dos <br>. Mantiene <b>, <i> y <u>.
+        """
+        import re, html
+
+        # A) Abrir párrafos fuera
+        html_raw = re.sub(r"(?i)<p[^>]*>", "", html_raw)
+        # B) Cerrar párrafos → <br><br>
+        html_raw = re.sub(r"(?i)</p>", "<br><br>", html_raw)
+
+        # C) Fuera <div> y <br> sueltos
+        html_raw = re.sub(r"(?i)</?div[^>]*>", "", html_raw)
+        html_raw = re.sub(r"(?i)<br\s*/?>", "<br>", html_raw)
+
+        # D) Limpieza de saltos invisibles y nbsp
+        html_raw = re.sub(r"(\r\n|\r|\n|&#10;|&#13;|\u2028|\u2029|&nbsp;)", " ", html_raw)
+
+        # E) Colapsar espacios
+        html_raw = re.sub(r"\s+", " ", html_raw).strip()
+
+        return html.unescape(html_raw)
 
     def abrir_ventana_alegato_fiscal(self):
         self._rich_text_dialog(
@@ -3576,13 +3601,17 @@ class SentenciaWidget(QWidget):
 
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
-        if not html_resuelvo.strip():
-            html_anchor = anchor_html("", "resuelvo")
+        doc_tmp = QTextDocument();  doc_tmp.setHtml(html_resuelvo)
+        plain_resuelvo = doc_tmp.toPlainText().strip()
+
+        if not plain_resuelvo:
+            resuelvo_anchor = anchor("[Editar resuelvo]", "resuelvo")
         else:
-            if not re.search(r"<p\b", html_resuelvo, flags=re.I):
-                html_resuelvo = f"<p>{html_resuelvo}</p>"
-            html_anchor = anchor_html(html_resuelvo, "resuelvo")
-        plantilla += html_anchor
+            clean_inline = self._inline_with_paragraphs(html_resuelvo)
+            resuelvo_anchor = anchor_html(clean_inline, "resuelvo")
+
+        # ♦ cambio: lo metemos dentro de un <p>
+        plantilla += f"<p align='justify'>{resuelvo_anchor}</p>"
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
