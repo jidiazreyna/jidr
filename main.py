@@ -660,10 +660,7 @@ class MainWindow(QMainWindow):
 
     def abrir_ventana_resuelvo(self):
         # recupero el HTML completo o, si no existe, la representación
-        html_actual = (
-            self.entry_resuelvo.property("html")
-            or self.entry_resuelvo.toHtml()
-        )
+        html_actual = self.entry_resuelvo.property("html") or ""
         self._rich_text_dialog(
             "Editar texto de Resuelvo",
             html_actual,
@@ -1453,10 +1450,7 @@ class MainWindow(QMainWindow):
             if isinstance(w, QComboBox):
                 return w.currentText()
             return ""
-        raw_html = (
-            self.entry_resuelvo.property("html")
-            or self.entry_resuelvo.toHtml()
-        )
+        raw_html = self.entry_resuelvo.property("html") or ""
 
         # ① texto plano SIN saltos (\n → espacio)
         resuelvo_plano = self.html_a_plano(raw_html, mantener_saltos=False)
@@ -1708,10 +1702,7 @@ class MainWindow(QMainWindow):
 
         # — extraer sólo el punto con 'Declarar' —
         # 1) obtener el HTML original y aplanarlo sin saltos
-        raw = (
-            self.entry_resuelvo.property("html")
-            or self.entry_resuelvo.toHtml()
-        )
+        raw = self.entry_resuelvo.property("html") or ""
         full = self.html_a_plano(raw, mantener_saltos=False)
         pattern = r'\b([IVX]+|\d+)\.\s+([\s\S]*?)(?=(?:[IVX]+|\d+)\.\s+|$)'
 
@@ -2247,10 +2238,7 @@ class MainWindow(QMainWindow):
             'funcionario': self.entry_funcionario.text(),
             'fiscal': self.entry_fiscal.text(),
             'sentencia': self.entry_sentencia.text(),
-            'resuelvo': (
-                self.entry_resuelvo.property("html")
-                or self.entry_resuelvo.toHtml()
-            ),
+            'resuelvo': self.entry_resuelvo.property("html") or "",
             'firmantes': self.entry_firmantes.text(),
             'renuncia': self.combo_renuncia.currentText()
         }
