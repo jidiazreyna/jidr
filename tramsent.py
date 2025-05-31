@@ -3105,17 +3105,16 @@ class SentenciaWidget(QWidget):
         # Si NADIE dijo nada, pero sí hay imputados (non_speakers_2 no vacío)
         elif not speakers_2 and non_speakers_2:
             # Todos guardaron silencio
-            partes_no = [nombre(idx) for idx in non_speakers_2]
-            if len(partes_no) == 1:
-                plantilla += (
-                    f"<p align='justify'>Finalmente, al concederse la última palabra, "
-                    f"{partes_no[0]} manifestó que no haría uso de ella.</p>"
+            for idx in non_speakers_2:
+                nm = nombre(idx)
+                enlace = anchor(
+                    "manifestó que no haría uso de ella",
+                    f"edit_imp_ultima_{idx}",
+                    "Última palabra",
                 )
-            else:
-                no_str = ", ".join(partes_no[:-1]) + f" y {partes_no[-1]}"
                 plantilla += (
                     f"<p align='justify'>Finalmente, al concederse la última palabra, "
-                    f"{no_str} manifestaron que no harían uso de ella.</p>"
+                    f"{nm} {enlace}.</p>"
                 )
 
         # Si AL MENOS UNO dijo algo
@@ -3161,17 +3160,15 @@ class SentenciaWidget(QWidget):
 
                 # Ahora mencionamos a los que NO hablaron
                 if non_speakers_2:
-                    partes_no = [nombre(idx) for idx in non_speakers_2]
-                    if len(partes_no) == 1:
-                        plantilla += (
-                            f"<p align='justify'>Por último, {partes_no[0]} "
-                            "manifestó que no haría uso de la palabra.</p>"
+                    for idx in non_speakers_2:
+                        nm = nombre(idx)
+                        enlace = anchor(
+                            "manifestó que no haría uso de la palabra",
+                            f"edit_imp_ultima_{idx}",
+                            "Última palabra",
                         )
-                    else:
-                        no_str = ", ".join(partes_no[:-1]) + f" y {partes_no[-1]}"
                         plantilla += (
-                            f"<p align='justify'>Por último, {no_str} "
-                            "manifestaron que no harían uso de la palabra.</p>"
+                            f"<p align='justify'>Por último, {nm} {enlace}.</p>"
                         )
 
         # Valoración de la prueba (corto y pego):
