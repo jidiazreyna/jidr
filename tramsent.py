@@ -1518,6 +1518,8 @@ class SentenciaWidget(QWidget):
         # ------------------------------------------------------------------
         # 1) El QTextEdit que amplía/reduce con Ctrl+rueda
         self.texto_plantilla = ZoomableTextEdit()
+        self.texto_plantilla.setOpenLinks(False)          # ← ¡línea nueva!
+        self.texto_plantilla.setOpenExternalLinks(False) 
         font = QFont("Times New Roman", 12)
         self.texto_plantilla.setFont(font)
         self.texto_plantilla.document().setDefaultFont(font)
