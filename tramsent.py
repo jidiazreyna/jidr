@@ -154,6 +154,21 @@ CENTENAS = (
     "novecientos",
 )
 
+# Opciones de salas de audiencias disponibles
+SALAS_OPCIONES = (
+    "Sala OGA 1 del MOPLO",
+    "Sala OGA 2 del MOPLO",
+    "Sala OGA 3 del MOPLO",
+    "Sala OGA 4 del MOPLO",
+    "Sala OGA 5 del MOPLO",
+    "Sala OGA 6 del MOPLO",
+    "Sala OGA 7 del MOPLO",
+    "Sala OGA 8 del MOPLO",
+    "Sala OGA 9 del MOPLO",
+    "Sala OGA 10 del MOPLO",
+    "Sala de audiencias de la Cámara en lo Criminal y Correccional",
+)
+
 #  helpers internos de RTF – pégalos encima de copy_to_clipboard
 _rx_tag = re.compile(r"<(/?)(b|strong|i|em|u|p)(?:\s+[^>]*)?>", re.I)
 _rx_p_align = re.compile(r"text-align\s*:\s*(left|right|center|justify)", re.I)
@@ -678,19 +693,7 @@ class SentenciaWidget(QWidget):
         # Sala
         self.var_sala = NoWheelComboBox()
         self.var_sala.setEditable(True)
-        salas_opciones = [
-            "Sala OGA 1 del MOPLO",
-            "Sala OGA 2 del MOPLO",
-            "Sala OGA 3 del MOPLO",
-            "Sala OGA 4 del MOPLO",
-            "Sala OGA 5 del MOPLO",
-            "Sala OGA 6 del MOPLO",
-            "Sala OGA 7 del MOPLO",
-            "Sala OGA 8 del MOPLO",
-            "Sala OGA 9 del MOPLO",
-            "Sala OGA 10 del MOPLO",
-            "Sala de audiencias de la Cámara en lo Criminal y Correccional",
-        ]
+        salas_opciones = list(SALAS_OPCIONES)
         self.var_sala.addItems(salas_opciones)
         if self.data.sala and self.data.sala not in salas_opciones:
             self.var_sala.addItem(self.data.sala)
@@ -2049,7 +2052,22 @@ class SentenciaWidget(QWidget):
 
         if href in edit_map:
             getter, setter, prompt = edit_map[href]
-            text, ok = QInputDialog.getText(self, prompt, prompt, text=getter())
+            if href == "edit_sala":
+                current = getter()
+                try:
+                    idx = SALAS_OPCIONES.index(current)
+                except ValueError:
+                    idx = 0
+                text, ok = QInputDialog.getItem(
+                    self,
+                    prompt,
+                    prompt,
+                    SALAS_OPCIONES,
+                    idx,
+                    True,
+                )
+            else:
+                text, ok = QInputDialog.getText(self, prompt, prompt, text=getter())
             if ok:
                 setter(text.strip())
                 self.actualizar_plantilla()
