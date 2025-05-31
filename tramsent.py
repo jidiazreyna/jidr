@@ -1157,8 +1157,10 @@ class SentenciaWidget(QWidget):
         # los párrafos originales en el portapapeles
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if html_resuelvo:
+            # Sustituimos el párrafo completo que contiene el ancla
+            # para evitar que el HTML final duplique la sección.
             basic_html = re.sub(
-                r'<a\s+href="resuelvo"[^>]*>.*?</a>',
+                r'<p[^>]*>\s*<a\s+href="resuelvo"[^>]*>.*?</a>\s*</p>',
                 html_resuelvo,
                 basic_html,
                 flags=re.I | re.S,
@@ -1818,8 +1820,10 @@ class SentenciaWidget(QWidget):
         # los párrafos originales en el DOCX generado.
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if html_resuelvo:
+            # Sustituimos el párrafo completo que contiene el ancla
+            # para evitar duplicaciones en el DOCX generado.
             basic_html = re.sub(
-                r'<a\s+href="resuelvo"[^>]*>.*?</a>',
+                r'<p[^>]*>\s*<a\s+href="resuelvo"[^>]*>.*?</a>\s*</p>',
                 html_resuelvo,
                 basic_html,
                 flags=re.I | re.S,
