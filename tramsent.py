@@ -1795,6 +1795,17 @@ class SentenciaWidget(QWidget):
         basic_html = re.sub(r"font-size\s*:[^;\"]+;?", "", basic_html, flags=re.I)
         basic_html = re.sub(r"<p\b", '<p align="justify"', basic_html, flags=re.I)
 
+        # Reemplazamos el ancla de «resuelvo» por su HTML real para conservar
+        # los párrafos originales en el DOCX generado.
+        html_resuelvo = self.var_resuelvo.property("html") or ""
+        if html_resuelvo:
+            basic_html = re.sub(
+                r'<a\s+href="resuelvo"[^>]*>.*?</a>',
+                html_resuelvo,
+                basic_html,
+                flags=re.I | re.S,
+            )
+
         # Pasamos por _sanitize_html para quitar spans/estilos extra
         raw_html = _sanitize_html(basic_html)
         # ───── PARCHE: asegurar apertura de <p> ─────
