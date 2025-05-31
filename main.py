@@ -31,6 +31,7 @@ import re
 from PySide6.QtCore import QMimeData
 from PySide6.QtWidgets import QHBoxLayout
 from widgets import NoWheelComboBox
+from widgets import NoWheelComboBox, NoWheelSpinBox
 def _DEBUG_unicode(tag: str, txt: str, n: int = 120):
     # imprime los primeros “n” caracteres con su code-point
     print(f"\n{tag}:")
