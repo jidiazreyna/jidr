@@ -981,8 +981,8 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
-        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
+        self._clear_highlight()
 
     def _rich_text_dialog(self, title: str, initial_html: str, on_accept_callback):
         """
@@ -1044,8 +1044,8 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
-        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
+        self._clear_highlight()
 
     # ──────────────────────────────────────────────────────────────
     def _abrir_editor_rich_sobre_lineedit(self, qle: QLineEdit, titulo: str):
@@ -1104,8 +1104,8 @@ class SentenciaWidget(QWidget):
 
         btn_box.accepted.connect(_on_ok)
         btn_box.rejected.connect(dlg.reject)
-        dlg.rejected.connect(self.actualizar_plantilla)
         dlg.exec()
+        self._clear_highlight()
 
     # ──────────────────────────────────────────────────────────────
     def copiar_sentencia(self, te: QTextEdit) -> None:
