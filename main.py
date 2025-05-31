@@ -395,7 +395,7 @@ class MainWindow(QMainWindow):
 
         label("Número de hechos:")
         self.spin_hechos = NoWheelSpinBox(); self.spin_hechos.setRange(1, 15)
-        self.spin_hechos.valueChanged.connect(self.rebuild_hechos)
+        self.spin_hechos.valueChanged.connect(self._on_hechos_changed)
         self.form.addWidget(self.spin_hechos, self._row, 1); self._row += 1
 
         self.tabs_hechos = QTabWidget()
@@ -758,6 +758,13 @@ class MainWindow(QMainWindow):
                 le_fec.setText(dato.get("fecha_elev", ""))
 
         self._building_hechos = False
+        # ``update_template`` se llamará únicamente cuando el usuario cambie
+        # manualmente la cantidad de hechos para evitar recursividad indeseada
+        # al reconstruir desde ``apply_to_main``.
+
+    def _on_hechos_changed(self, _=None):
+        """Actualiza pestañas y plantilla tras un cambio del usuario."""
+        self.rebuild_hechos()
         self.update_template()
 
     def abrir_ventana_resuelvo(self):
