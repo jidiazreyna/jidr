@@ -251,6 +251,10 @@ def _sanitize_html_italic_only(html_raw: str) -> str:
     if m:
         html_raw = m.group(1)
 
+    # eliminamos cualquier bloque <style>…</style> o meta etiquetas remanentes
+    html_raw = re.sub(r"<style[^>]*>.*?</style>", "", html_raw, flags=re.I | re.S)
+    html_raw = re.sub(r"<meta[^>]*>", "", html_raw, flags=re.I)
+
     # 1) fuera <b>, </b>, <strong>, </strong>, <u>, </u>, y spans con font-weight
     html_raw = re.sub(r"</?(b|strong|u)[^>]*>", "", html_raw, flags=re.I)
     html_raw = re.sub(
@@ -294,6 +298,10 @@ def _sanitize_html(html_raw: str) -> str:
     if m:
         html_raw = m.group(1)
     # (si por algún motivo no hay <body>, seguimos con lo que venga)
+
+    # eliminamos style/meta eventualmente incrustados en el cuerpo
+    html_raw = re.sub(r"<style[^>]*>.*?</style>", "", html_raw, flags=re.I | re.S)
+    html_raw = re.sub(r"<meta[^>]*>", "", html_raw, flags=re.I)
 
     # B)  ───── A partir de aquí van los pasos que ya tenías ─────
     # a) <strong>/<em> → <b>/<i>
@@ -3559,8 +3567,11 @@ class SentenciaWidget(QWidget):
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if html_resuelvo:
-            html_resuelvo = anchor(html_resuelvo, "resuelvo")
-            plantilla += f"<p align='justify'>{html_resuelvo}</p>"
+            preview = self.html_a_plano(html_resuelvo, mantener_saltos=False)
+        else:
+            preview = ""
+        html_resuelvo = anchor(preview, "resuelvo")
+        plantilla += f"<p align='justify'>{html_resuelvo}</p>"
 
         plantilla = f'<div style="text-align: justify;">{plantilla}</div>'
 
