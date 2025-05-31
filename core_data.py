@@ -203,7 +203,7 @@ class CausaData:
             else "Juzgado de Control"
         )
         self.fiscal_nombre   = sw.var_fiscal.text().strip()
-        self.fiscal_sexo     = "F" if sw.rb_fiscal_f.isChecked() else "M"
+        self.fiscal_sexo     = sw.combo_fiscal_sexo.currentText()
         self.fecha_audiencia = sw.var_dia_audiencia.text().strip()
         self.n_imputados     = sw.var_num_imputados.value()
         html_full = sw.var_resuelvo.property("html") or ""
@@ -221,7 +221,7 @@ class CausaData:
         for idx, imp_w in enumerate(sw.imputados):
             nuevos = {
                 "nombre"      : imp_w["nombre"].text().strip(),
-                "sexo"        : "F" if imp_w["sexo_rb"][1].isChecked() else "M",
+                "sexo"        : imp_w["sexo_cb"].currentText(),
                 "datos"       : imp_w["datos"].text().strip(),
                 "defensa"     : imp_w["defensor"].text().strip(),
                 "tipo"        : imp_w["tipo_def"].currentText().strip(),
@@ -261,7 +261,7 @@ class CausaData:
         (sw.rb_juez_f if self.juez_sexo == 'F' else sw.rb_juez_m).setChecked(True)
         sw.boton_cargo_juez.setText(self.juez_cargo)
         sw.var_fiscal.setText(self.fiscal_nombre)
-        (sw.rb_fiscal_f if self.fiscal_sexo == 'F' else sw.rb_fiscal_m).setChecked(True)
+        sw.combo_fiscal_sexo.setCurrentText(self.fiscal_sexo)
         sw.var_dia_audiencia.setText(self.fecha_audiencia)
         sw.var_num_imputados.setValue(self.n_imputados)
         html_full = getattr(self, "resuelvo_html", self.resuelvo)
@@ -283,11 +283,8 @@ class CausaData:
             if idx >= len(sw.imputados):
                 break
             w = sw.imputados[idx]
-            w["nombre"].setText( datos_imp.get("nombre","") )
-            if datos_imp.get("sexo","M") == "F":
-                w["sexo_rb"][1].setChecked(True)
-            else:
-                w["sexo_rb"][0].setChecked(True)
+            w["nombre"].setText( datos_imp.get("nombre", "") )
+            w["sexo_cb"].setCurrentText(datos_imp.get("sexo", "M"))
             w["datos"].setText( datos_imp.get("datos","") )
             w["defensor"].setText( datos_imp.get("defensa","") )
             w["tipo_def"].setCurrentText( datos_imp.get("tipo","") )
