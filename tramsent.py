@@ -2158,7 +2158,9 @@ class SentenciaWidget(QWidget):
             combo_sexo = NoWheelComboBox()
             combo_sexo.addItems(["M", "F"])
             combo_sexo.setCurrentText(
-                self.data.imputados[idx - 1]["sexo"] if idx - 1 < len(self.data.imputados) else "M"
+                self.data.imputados[idx - 1].get("sexo", "M")
+                if idx - 1 < len(self.data.imputados)
+                else "M"
             )
             layout.addWidget(lbl_sexo, 1, 0)
             layout.addWidget(combo_sexo, 1, 1)
