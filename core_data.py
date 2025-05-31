@@ -178,7 +178,9 @@ class CausaData:
 
         # --- Hechos ---
         if hasattr(win, "spin_hechos"):
+            was_blocked = win.spin_hechos.blockSignals(True)
             win.spin_hechos.setValue(self.num_hechos or len(self.hechos) or 1)
+            win.spin_hechos.blockSignals(was_blocked)
             win.rebuild_hechos()
             for idx, datos in enumerate(self.hechos):
                 if idx >= len(win.hechos_widgets):
