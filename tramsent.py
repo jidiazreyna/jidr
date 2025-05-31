@@ -3577,7 +3577,7 @@ class SentenciaWidget(QWidget):
         # ── Resuelvo ───────────────────────────────────────────
         html_resuelvo = self.var_resuelvo.property("html") or ""
         if not html_resuelvo.strip():
-            html_anchor = anchor_html("", "resuelvo", "resuelvo")
+            html_anchor = anchor_html("", "resuelvo")
         else:
             if not re.search(r"<p\b", html_resuelvo, flags=re.I):
                 html_resuelvo = f"<p>{html_resuelvo}</p>"
