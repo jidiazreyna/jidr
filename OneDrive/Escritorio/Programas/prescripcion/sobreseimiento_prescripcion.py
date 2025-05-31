@@ -118,6 +118,25 @@ class SafeDict(UserDict):
     def __missing__(self, key):
         return "{" + key + "}"
 
+# Ordinales para numerar los hechos cuando hay más de uno
+ORDINALES_HECHOS = [
+    "Primer",
+    "Segundo",
+    "Tercer",
+    "Cuarto",
+    "Quinto",
+    "Sexto",
+    "Séptimo",
+    "Octavo",
+    "Noveno",
+    "Décimo",
+    "Undécimo",
+    "Duodécimo",
+    "Decimotercero",
+    "Decimocuarto",
+    "Decimoquinto",
+]
+
 TEMPLATE = """
 <p align='justify'>Córdoba, {fecha_letras}.</p>
 <p align='justify'>VISTA: la presente causa caratulada {caratula}, venida a {este_esta} {tribunal} a los efectos de resolver la situación procesal de {nombre_apellido}</p>
@@ -145,14 +164,18 @@ def render_prescripcion(*, sexos_imputados: List[str], nombres: List[str], hecho
     for idx, (nom, sx) in enumerate(zip(nombres, sexos_imputados), start=1):
         art = "el imputado" if sx == "M" else "la imputada"
         imp_lines.append(f"{idx}. {art} {nom}")
-    hechos_lines = [f"{i+1}. {txt}" for i, txt in enumerate(hechos)]
+    if len(hechos) == 1:
+        hechos_html = f"<p align='justify'><i>{hechos[0]}</i></p>"
+    else:
+        hechos_html = "\n".join(
+            f"<p align='justify'><b>{ORDINALES_HECHOS[i] if i < len(ORDINALES_HECHOS) else f'{i+1}°'} hecho:</b> <i>{txt}</i></p>"
+            for i, txt in enumerate(hechos)
+        )
 
     auto["imputados_html"] = "\n".join(
         f"<p align='justify'>{l}</p>" for l in imp_lines
     ) or "[imputados]"
-    auto["hechos_html"] = "\n".join(
-        f"<p align='justify'><i>{h}</i></p>" for h in hechos_lines
-    ) or "[hechos]"
+    auto["hechos_html"] = hechos_html or "[hechos]"
 
     data = SafeDict(auto)
     data.update(campos)
