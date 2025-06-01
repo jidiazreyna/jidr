@@ -1646,7 +1646,6 @@ class SentenciaWidget(QWidget):
             self.general_group,
             self.imputados_group,
             self.hechos_group,
-            self.extra_group,
         ):
             self.left_layout.addWidget(grp)
 
@@ -1657,6 +1656,14 @@ class SentenciaWidget(QWidget):
 
         main_layout.addWidget(self.left_scroll, 2)
         self.left_scroll.setVisible(False)
+
+        # Botón y panel de "Otras opciones" -------------------------------
+        self.btn_toggle_extra = QToolButton()
+        self.btn_toggle_extra.setText("▶ Otras opciones")
+        self.btn_toggle_extra.clicked.connect(self.toggle_extra_panel)
+        main_layout.addWidget(self.btn_toggle_extra, 0, Qt.AlignTop)
+        main_layout.addWidget(self.extra_group, 1)
+        self.extra_group.setVisible(False)
 
         # ------------------------------------------------------------------
         self.btn_generar_docx = QPushButton("Generar Word")
@@ -2060,6 +2067,12 @@ class SentenciaWidget(QWidget):
         else:
             self.var_correccion_calif.setEnabled(False)
             self.var_correccion_calif.clear()
+
+    def toggle_extra_panel(self):
+        visible = not self.extra_group.isVisible()
+        self.extra_group.setVisible(visible)
+        arrow = "◀" if visible else "▶"
+        self.btn_toggle_extra.setText(f"{arrow} Otras opciones")
 
     def _on_anchor_clicked(self, url):
         href = url.toString()
