@@ -1367,7 +1367,7 @@ class SentenciaWidget(QWidget):
             "Escribir alegato fiscal",
             self.var_alegato_fiscal,
             lambda h: (
-                setattr(self, "var_alegato_fiscal", self._flatten_inline(h)),
+                setattr(self, "var_alegato_fiscal", h.strip()),
                 self.actualizar_plantilla(),
             ),
         )
@@ -1382,7 +1382,7 @@ class SentenciaWidget(QWidget):
             "Editar el alegato de la defensa",
             self.var_alegato_defensa,
             lambda h: (
-                setattr(self, "var_alegato_defensa", self._flatten_inline(h)),
+                setattr(self, "var_alegato_defensa", h.strip()),
                 self.actualizar_plantilla(),
             ),
         )
@@ -1397,7 +1397,7 @@ class SentenciaWidget(QWidget):
             "Agregar prueba",
             self.var_prueba,
             lambda h: (
-                setattr(self, "var_prueba", self._flatten_inline(h)),
+                setattr(self, "var_prueba", h.strip()),
                 self.actualizar_plantilla(),
             ),
         )
@@ -1412,7 +1412,7 @@ class SentenciaWidget(QWidget):
             "Agregar pruebas relevantes",
             self.var_pruebas_importantes,
             lambda h: (
-                setattr(self, "var_pruebas_importantes", self._flatten_inline(h)),
+                setattr(self, "var_pruebas_importantes", h.strip()),
                 self.actualizar_plantilla(),
             ),
         )
@@ -1423,8 +1423,8 @@ class SentenciaWidget(QWidget):
         self.actualizar_plantilla()
 
     def _guardar_html_lineedit(self, qlineedit, html):
-        """Guarda `html` aplanado en property('html') y preview plano en el LineEdit."""
-        h = self._flatten_inline(html)
+        """Guarda ``html`` tal cual, generando un preview plano en el ``QLineEdit``."""
+        h = html.strip()
         qlineedit.setProperty("html", h)
         qlineedit.setText(QTextDocument(h).toPlainText().replace("\n", " "))
         self.actualizar_plantilla()
@@ -2804,8 +2804,13 @@ class SentenciaWidget(QWidget):
                 self.hechos[i]["descripcion"].property("html")
                 or self.hechos[i]["descripcion"].text()
             ).strip()
+            desc_html = self._inline_with_paragraphs(desc_html)
             aclar_str = self.hechos[i]["aclaraciones"].text().strip()
-            desc_anchor = anchor_html(f"<i>{desc_html}</i>", f"edit_hecho_descripcion_{i}", "hecho")
+            desc_anchor = anchor_html(
+                f"<i>{desc_html}</i>",
+                f"edit_hecho_descripcion_{i}",
+                "hecho",
+            )
             aclar_anchor = anchor(aclar_str, f"edit_hecho_aclaraciones_{i}", "aclaración") if aclar_str else ""
             if n_hec == 1:
                 if aclar_str:
@@ -3052,9 +3057,11 @@ class SentenciaWidget(QWidget):
             name_i = f"<b>{final_names_list[i]}</b>"
             condiciones = strip_trailing_single_dot(
                 (
-                    imp["condiciones"].property("html") or imp["condiciones"].text()
+                    imp["condiciones"].property("html")
+                    or imp["condiciones"].text()
                 ).strip()
             )
+            condiciones = self._inline_with_paragraphs(condiciones)
             condiciones = anchor_html(
                 condiciones or "[condiciones]",
                 f"edit_imp_condiciones_{i}",
@@ -3078,9 +3085,11 @@ class SentenciaWidget(QWidget):
             name_i = f"<b>{nm}</b>"
             no_registra = imp["antecedentes_opcion"][0].isChecked()
             ant_html = (
-                imp["antecedentes"].property("html") or imp["antecedentes"].text()
+                imp["antecedentes"].property("html")
+                or imp["antecedentes"].text()
             ).strip()
             ant_html = strip_trailing_single_dot(ant_html)
+            ant_html = self._inline_with_paragraphs(ant_html)
             if no_registra:
                 has_no = True
                 ant_anchor = anchor(
