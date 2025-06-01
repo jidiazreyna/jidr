@@ -30,8 +30,8 @@ from PySide6.QtGui import QTextDocument
 import re
 from PySide6.QtCore import QMimeData
 from PySide6.QtWidgets import QHBoxLayout
-from widgets import NoWheelComboBox
 from widgets import NoWheelComboBox, NoWheelSpinBox
+from constants import TRIBUNALES
 def _DEBUG_unicode(tag: str, txt: str, n: int = 120):
     # imprime los primeros “n” caracteres con su code-point
     print(f"\n{tag}:")
@@ -312,33 +312,7 @@ class MainWindow(QMainWindow):
         self.entry_caratula   = add_line('entry_caratula',   "Carátula:")
         self.combo_articulo   = add_combo('combo_articulo',  "Cámara o juzgado:",
                                         ["Cámara en lo Criminal y Correccional", "Juzgado de Control"])
-        opciones_tribunal = [
-            "Cámara en lo Criminal y Correccional de Primera Nominación", 
-            "Cámara en lo Criminal y Correccional de Segunda Nominación", 
-            "Cámara en lo Criminal y Correccional de Tercera Nominación", 
-            "Cámara en lo Criminal y Correccional de Cuarta Nominación", 
-            "Cámara en lo Criminal y Correccional de Quinta Nominación", 
-            "Cámara en lo Criminal y Correccional de Sexta Nominación", 
-            "Cámara en lo Criminal y Correccional de Séptima Nominación", 
-            "Cámara en lo Criminal y Correccional de Octava Nominación", 
-            "Cámara en lo Criminal y Correccional de Novena Nominación", 
-            "Cámara en lo Criminal y Correccional de Décima Nominación", 
-            "Cámara en lo Criminal y Correccional de Onceava Nominación", 
-            "Cámara en lo Criminal y Correccional de Doceava Nominación", 
-            "Juzgado de Control en lo Penal Económico", 
-            "Juzgado de Control y Faltas N° 2", 
-            "Juzgado de Control y Faltas N° 3", 
-            "Juzgado de Control y Faltas N° 4", 
-            "Juzgado de Control y Faltas N° 5", 
-            "Juzgado de Control en Violencia de Género y Familiar N° 1", 
-            "Juzgado de Control en Violencia de Género y Familiar N° 2", 
-            "Juzgado de Control y Faltas N° 7", 
-            "Juzgado de Control y Faltas N° 8", 
-            "Juzgado de Control y Faltas N° 9", 
-            "Juzgado de Control y Faltas N° 10",
-            "Juzgado de Control y Faltas N° 11", 
-            "Juzgado de Control de Lucha contra el Narcotráfico"
-        ]
+        opciones_tribunal = TRIBUNALES
 
         # Reemplazamos entry_tribunal por un combo editable
         self.entry_tribunal = add_combo(
