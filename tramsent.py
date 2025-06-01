@@ -2142,9 +2142,9 @@ class SentenciaWidget(QWidget):
             return
 
         if href.startswith("edit_imp_"):
-            parts = href.split("_")
-            field = parts[2]
-            idx = int(parts[3])
+            prefix, idx_str = href.rsplit("_", 1)
+            idx = int(idx_str)
+            field = prefix[len("edit_imp_") :]
             if field == "datos":
                 self.abrir_ventana_datos(idx)
                 return
@@ -2204,9 +2204,9 @@ class SentenciaWidget(QWidget):
             return
 
         if href.startswith("edit_hecho_"):
-            parts = href.split("_")
-            field = parts[2]
-            idx = int(parts[3])
+            prefix, idx_str = href.rsplit("_", 1)
+            idx = int(idx_str)
+            field = prefix[len("edit_hecho_") :]
             if field == "descripcion":
                 self.abrir_ventana_descripcion(idx)
                 return
