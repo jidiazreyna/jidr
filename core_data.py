@@ -106,18 +106,27 @@ class CausaData:
         self.renuncia        = getattr(win, "combo_renuncia",     None).currentText() == "Sí" if hasattr(win, "combo_renuncia") else self.renuncia
         self.n_imputados     = int(getattr(win, "combo_n",        None).currentText()) if hasattr(win, "combo_n") else self.n_imputados
 
-        # Imputados — copiamos todos los widgets actuales
+        # Imputados — copiamos todos los widgets actuales sin perder datos previos
+        old = list(self.imputados)
         self.imputados.clear()
         if hasattr(win, "imputados_widgets"):
-            for w in win.imputados_widgets:
-                self.imputados.append({
+            for idx, w in enumerate(win.imputados_widgets):
+                nuevos = {
                     key: (
                         widget.text()        if isinstance(widget, QLineEdit) else
                         widget.currentText() if isinstance(widget, QComboBox) else
                         widget.isChecked()   if isinstance(widget, QCheckBox) else None
                     )
                     for key, widget in w.items()
-                })
+                }
+
+                if idx < len(old):
+                    base = old[idx].copy()
+                    base.update(nuevos)
+                else:
+                    base = nuevos
+
+                self.imputados.append(base)
 
         # Hechos
         self.hechos.clear()
