@@ -2120,6 +2120,20 @@ class SentenciaWidget(QWidget):
                     idx,
                     True,
                 )
+            elif href == "edit_tribunal":
+                current = getter()
+                try:
+                    idx = TRIBUNALES.index(current)
+                except ValueError:
+                    idx = 0
+                text, ok = QInputDialog.getItem(
+                    self,
+                    prompt,
+                    prompt,
+                    TRIBUNALES,
+                    idx,
+                    True,
+                )
             else:
                 text, ok = QInputDialog.getText(self, prompt, prompt, text=getter())
             if ok:
