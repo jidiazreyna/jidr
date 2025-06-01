@@ -2142,9 +2142,9 @@ class SentenciaWidget(QWidget):
             return
 
         if href.startswith("edit_imp_"):
-            parts = href.split("_")
-            field = parts[2]
-            idx = int(parts[3])
+            prefix, idx_str = href.rsplit("_", 1)
+            idx = int(idx_str)
+            field = prefix[len("edit_imp_") :]
             if field == "datos":
                 self.abrir_ventana_datos(idx)
                 return
@@ -2204,9 +2204,9 @@ class SentenciaWidget(QWidget):
             return
 
         if href.startswith("edit_hecho_"):
-            parts = href.split("_")
-            field = parts[2]
-            idx = int(parts[3])
+            prefix, idx_str = href.rsplit("_", 1)
+            idx = int(idx_str)
+            field = prefix[len("edit_hecho_") :]
             if field == "descripcion":
                 self.abrir_ventana_descripcion(idx)
                 return
@@ -2646,10 +2646,9 @@ class SentenciaWidget(QWidget):
             if not nm:
                 nm = f"Imputado#{i+1}"
             nm_anchor = anchor(nm, f"edit_imp_nombre_{i}", "Nombre imputado")
-            d = (imp["datos"].property("html") or imp["datos"].text()).strip()
-            comb = f"<b>{nm_anchor}</b>"
-            if d:
-                comb += f", {d}"
+            d_html = (imp["datos"].property("html") or imp["datos"].text()).strip()
+            d_anchor = anchor_html(d_html, f"edit_imp_datos_{i}", "Datos")
+            comb = f"<b>{nm_anchor}</b>, {d_anchor}"
             datos_personales_list.append(comb)
         datos_personales_str = strip_trailing_single_dot(
             format_list_with_semicolons(datos_personales_list)
@@ -2869,8 +2868,9 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
-            delit = imp["delitos"].text().strip()
-            accusations.append(f"{nm} bajo la calificación legal de {delit}")
+            delit_text = imp["delitos"].text().strip()
+            delit_anchor = anchor(delit_text, f"edit_imp_delitos_{i}", "Delitos")
+            accusations.append(f"{nm} bajo la calificación legal de {delit_anchor}")
 
         if n_imp == 1 and n_hec == 1:
             acusacion_prefix = "Por tal conducta se acusa"
@@ -2882,19 +2882,22 @@ class SentenciaWidget(QWidget):
             nm = imp["nombre"].text().strip()
             if not nm:
                 nm = f"Imputado#{i+1}"
-            delit = imp["delitos"].text().strip()
-            if delit not in delitos_dict:
-                delitos_dict[delit] = []
-            delitos_dict[delit].append(nm)
+            delit_text = imp["delitos"].text().strip()
+            delit_anchor = anchor(delit_text, f"edit_imp_delitos_{i}", "Delitos")
+            if delit_text not in delitos_dict:
+                delitos_dict[delit_text] = {"names": [], "anchor": delit_anchor}
+            delitos_dict[delit_text]["names"].append(nm)
 
         accusations_grouped = []
-        for delito, lista_nombres in delitos_dict.items():
+        for delito, info in delitos_dict.items():
+            lista_nombres = info["names"]
+            delito_anchor = info["anchor"]
             if len(lista_nombres) == 1:
                 unica_persona = lista_nombres[0]
-                fragmento = f"{unica_persona} bajo la calificación legal de {delito}"
+                fragmento = f"{unica_persona} bajo la calificación legal de {delito_anchor}"
             else:
                 nombres_unidos = format_list_for_sentence(lista_nombres)
-                fragmento = f"{nombres_unidos} bajo la calificación legal de {delito}"
+                fragmento = f"{nombres_unidos} bajo la calificación legal de {delito_anchor}"
             accusations_grouped.append(fragmento)
 
         if n_imp == 1 and n_hec == 1:
@@ -2940,6 +2943,7 @@ class SentenciaWidget(QWidget):
             condena_unica = strip_trailing_single_dot(
                 self.imputados[0]["condena"].text().strip()
             )
+            condena_unica = anchor(condena_unica, "edit_imp_condena_0", "Condena")
             plantilla += f"determinó la de {condena_unica}.</p>"
         else:
             frag_penas = []
@@ -2947,8 +2951,10 @@ class SentenciaWidget(QWidget):
                 nombre_tmp = self.imputados[i]["nombre"].text().strip()
                 if not nombre_tmp:
                     nombre_tmp = f"Imputado#{i+1}"
+                pena_text = strip_trailing_single_dot(self.imputados[i]["condena"].text().strip())
+                pena_anchor = anchor(pena_text, f"edit_imp_condena_{i}", "Condena")
                 frag_penas.append(
-                    f"para {nombre_tmp}, la de {self.imputados[i]['condena'].text().strip()}"
+                    f"para {nombre_tmp}, la de {pena_anchor}"
                 )
             acuerdo_str = strip_trailing_single_dot(
                 format_list_with_semicolons(frag_penas)
@@ -3690,7 +3696,8 @@ class SentenciaWidget(QWidget):
 
         for i, imp in enumerate(self.imputados):
             nm = final_names_list[i]
-            condena_str = imp["condena"].text().strip()
+            condena_text = strip_trailing_single_dot(imp["condena"].text().strip())
+            condena_anchor = anchor(condena_text, f"edit_imp_condena_{i}", "Condena")
             if i == 0:
                 plantilla += (
                     f"<p align='justify'>Por ello, teniendo en especial consideración el límite máximo que "
@@ -3698,11 +3705,11 @@ class SentenciaWidget(QWidget):
                     f"de la pena, al establecer que no se podrá aplicar una pena más grave que "
                     f"la pedida por el Representante del Ministerio Público Fiscal y acordada con "
                     f"el acusado y su defensor, ni modificar su forma de ejecución, corresponde "
-                    f"imponerle a {nm}, para su tratamiento penitenciario, la pena de {condena_str}.</p>"
+                    f"imponerle a {nm}, para su tratamiento penitenciario, la pena de {condena_anchor}.</p>"
                 )
             else:
                 intro2 = introductions_2[(i - 1) % len(introductions_2)]
-                plantilla += f"<p align='justify'>{intro2} corresponde imponerle a {nm} la pena de {condena_str}.</p>"
+                plantilla += f"<p align='justify'>{intro2} corresponde imponerle a {nm} la pena de {condena_anchor}.</p>"
 
         next_section = 2
 
